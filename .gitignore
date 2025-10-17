@@ -71,15 +71,15 @@ tempCodeRunnerFile.py
 *.temp
 
 # Uploaded files
-uploads/*.png
-uploads/*.jpg
-uploads/*.jpeg
-uploads/*.gif
-!uploads/.gitkeep
+pokemon/uploads/*.png
+pokemon/uploads/*.jpg
+pokemon/uploads/*.jpeg
+pokemon/uploads/*.gif
+!pokemon/uploads/.gitkeep
 
 # Model backups
-models/drawing_model_backup_*/
-models/drawing_model_backup/
+pokemon/models/drawing_model_backup_*/
+pokemon/models/drawing_model_backup/
 
 # Archives
 *.zip
