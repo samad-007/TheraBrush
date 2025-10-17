@@ -10,9 +10,11 @@ from performance_metrics import track_face_recognition_performance, performance_
 import json
 import numpy as np
 from datetime import datetime
+import os
 
-API_KEY = "REDACTED_API_KEY"
-API_SECRET = "REDACTED_API_SECRET"
+# Load API keys from environment variables
+API_KEY = os.environ.get("FACEPP_API_KEY", "")
+API_SECRET = os.environ.get("FACEPP_API_SECRET", "")
 FACEPP_URL = "https://api-us.faceplusplus.com/facepp/v3/detect"
 IMAGE_PATH = './uploads/image.png'
 TEXT_FILE_PATH = './emotions.txt'
