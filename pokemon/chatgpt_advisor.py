@@ -1,19 +1,28 @@
 import os
 import json
-# Using v1beta as shown in the official example
-import google.generativeai as genai
 from performance_metrics import track_ai_performance
+
+# Try to import Gemini API, but make it optional
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("Google Generative AI library not installed. Install with: pip install google-generativeai")
 
 class ChatGPTAdvisor:
     def __init__(self, api_key=None):
-        """Initialize the Gemini advisor (despite the class name)"""
+        """Initialize the AI advisor (using Gemini API)"""
         # Use environment variable if no API key provided
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
+        self.api_available = GEMINI_AVAILABLE and bool(self.api_key)
         
         # Log API key status (but never log the key itself)
-        if self.api_key:
+        if not GEMINI_AVAILABLE:
+            print("Gemini API library not available - will use rule-based suggestions")
+        elif self.api_key:
             print("Gemini API key detected")
-            # Configure the Gemini API - using v1beta as shown in the official example
+            # Configure the Gemini API
             genai.configure(api_key=self.api_key)
         else:
             print("No Gemini API key found - will use rule-based suggestions")
@@ -21,8 +30,8 @@ class ChatGPTAdvisor:
     @track_ai_performance
     def get_art_suggestions(self, drawing_type, emotion, previous_suggestions=None):
         """Get art suggestions based on the drawing and emotion"""
-        if not self.api_key:
-            # Fallback to rule-based suggestions if no API key
+        if not self.api_available:
+            # Fallback to rule-based suggestions if no API available
             return self.rule_based_suggestions(drawing_type, emotion)
         
         try:
@@ -56,48 +65,48 @@ class ChatGPTAdvisor:
                 "max_output_tokens": 150,
             }
             
-            # Create the model - using gemini-2.0-flash as shown in the official example
-            model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
-                generation_config=generation_config
-            )
+            # Try gemini-2.0-flash first, fall back to gemini-pro if not available
+            model_names = ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-pro"]
             
-            # Generate the response using the v1beta API format
-            response = model.generate_content(prompt)
-            
-            if response and hasattr(response, 'text'):
-                suggestion = response.text.strip()
-                # Include the text length in the return for better metrics tracking
-                return {"suggestion": suggestion, "source": "gemini", "text_length": len(suggestion)}
-            else:
-                print("Empty response from Gemini API")
-                return self.rule_based_suggestions(drawing_type, emotion)
-                
-        except Exception as e:
-            print(f"Error calling Gemini API: {str(e)}")
-            # If the specific model is not found, fall back to gemini-pro
-            if "is not found" in str(e):
-                print("Falling back to gemini-pro model")
+            for model_name in model_names:
                 try:
+                    # Create the model
                     model = genai.GenerativeModel(
-                        model_name="gemini-pro", 
+                        model_name=model_name,
                         generation_config=generation_config
                     )
+                    
+                    # Generate the response
                     response = model.generate_content(prompt)
+                    
                     if response and hasattr(response, 'text'):
                         suggestion = response.text.strip()
                         # Include the text length in the return for better metrics tracking
-                        return {"suggestion": suggestion, "source": "gemini (fallback)", "text_length": len(suggestion)}
-                except Exception as fallback_error:
-                    print(f"Fallback also failed: {str(fallback_error)}")
+                        return {
+                            "suggestion": suggestion, 
+                            "source": f"gemini ({model_name})", 
+                            "text_length": len(suggestion)
+                        }
+                    else:
+                        print(f"Empty response from Gemini API with model {model_name}")
+                        continue
+                        
+                except Exception as model_error:
+                    print(f"Error with model {model_name}: {str(model_error)}")
+                    if model_name == model_names[-1]:  # Last model in list
+                        # All models failed, use rule-based
+                        return self.rule_based_suggestions(drawing_type, emotion)
+                    continue  # Try next model
                 
+        except Exception as e:
+            print(f"Error calling Gemini API: {str(e)}")
             return self.rule_based_suggestions(drawing_type, emotion)
     
     @track_ai_performance
     def get_detailed_art_suggestions(self, drawing_context, emotion, previous_suggestions=None):
         """Get detailed art suggestions based on more complete drawing analysis"""
-        if not self.api_key:
-            # Fallback to rule-based suggestions if no API key
+        if not self.api_available:
+            # Fallback to rule-based suggestions if no API available
             return self.rule_based_suggestions(drawing_context["type"], emotion)
         
         try:
@@ -184,41 +193,41 @@ class ChatGPTAdvisor:
                 "max_output_tokens": 200,
             }
             
-            # Create the model - using gemini-2.0-flash as shown in the official example
-            model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
-                generation_config=generation_config
-            )
+            # Try gemini models in order of preference
+            model_names = ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-pro"]
             
-            # Generate the response using the v1beta API format
-            response = model.generate_content(prompt)
-            
-            if response and hasattr(response, 'text'):
-                suggestion = response.text.strip()
-                # Include the text length in the return for better metrics tracking
-                return {"suggestion": suggestion, "source": "gemini", "text_length": len(suggestion)}
-            else:
-                print("Empty response from Gemini API")
-                return self.rule_based_suggestions(drawing_type, emotion)
-                
-        except Exception as e:
-            print(f"Error calling Gemini API: {str(e)}")
-            # If the specific model is not found, fall back to gemini-pro
-            if "is not found" in str(e):
-                print("Falling back to gemini-pro model")
+            for model_name in model_names:
                 try:
+                    # Create the model
                     model = genai.GenerativeModel(
-                        model_name="gemini-pro", 
+                        model_name=model_name,
                         generation_config=generation_config
                     )
+                    
+                    # Generate the response
                     response = model.generate_content(prompt)
+                    
                     if response and hasattr(response, 'text'):
                         suggestion = response.text.strip()
                         # Include the text length in the return for better metrics tracking
-                        return {"suggestion": suggestion, "source": "gemini (fallback)", "text_length": len(suggestion)}
-                except Exception as fallback_error:
-                    print(f"Fallback also failed: {str(fallback_error)}")
-
+                        return {
+                            "suggestion": suggestion, 
+                            "source": f"gemini ({model_name})", 
+                            "text_length": len(suggestion)
+                        }
+                    else:
+                        print(f"Empty response from Gemini API with model {model_name}")
+                        continue
+                        
+                except Exception as model_error:
+                    print(f"Error with model {model_name}: {str(model_error)}")
+                    if model_name == model_names[-1]:  # Last model in list
+                        # All models failed, use rule-based
+                        return self.rule_based_suggestions(drawing_context["type"], emotion)
+                    continue  # Try next model
+                
+        except Exception as e:
+            print(f"Error calling Gemini API: {str(e)}")
             return self.rule_based_suggestions(drawing_context["type"], emotion)
     
     def rule_based_suggestions(self, drawing_type, emotion):
