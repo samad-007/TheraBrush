@@ -509,24 +509,41 @@ def analyze_drawing_content(image_path):
                         drawing_type = "person"
                         confidence = 0.6
                 
-                # Check for multiple objects/dense patterns
-                elif pixel_density > 0.3:
+                # Check for multiple objects BEFORE dense pattern
+                elif len(contours) > 8:
+                    drawing_type = "multiple_objects"
+                    confidence = 0.7 + min(0.2, (len(contours) - 8) / 30)
+                
+                # Check for dense patterns - INCREASED threshold to >60%
+                elif pixel_density > 0.6:
                     drawing_type = "dense_pattern"
                     confidence = min(0.8, pixel_density)
                 elif len(contours) > 5:
                     drawing_type = "multiple_objects"
-                    confidence = 0.6 + min(0.3, (len(contours) - 5) / 30)  # More contours, higher confidence
+                    confidence = 0.6 + min(0.2, (len(contours) - 5) / 30)
                 
                 # If nothing specific is detected, fallback to shape-based analysis
                 else:
-                    # Use a more nuanced approach based on the aspect ratio and other features
-                    if 0.8 < aspect_ratio < 1.2:  # Nearly square
-                        if 0.7 < circularity < 1.3:  # Somewhat circular
-                            drawing_type = "circle"
-                            confidence = 0.6
+                    # Use improved shape detection based on circularity
+                    if circularity > 0.8:  # High circularity = circle
+                        drawing_type = "circle"
+                        confidence = min(0.85, circularity * 0.9)
+                    elif 0.65 < circularity < 0.85:  # Medium circularity
+                        if 0.8 < aspect_ratio < 1.2:  # Nearly square
+                            drawing_type = "square"
+                            confidence = 0.75
+                        elif aspect_ratio > 1.3:
+                            drawing_type = "rectangle"
+                            confidence = 0.75
+                        elif aspect_ratio < 0.7:
+                            drawing_type = "rectangle"
+                            confidence = 0.7
                         else:
                             drawing_type = "square"
-                            confidence = 0.6
+                            confidence = 0.65
+                    elif 0.4 < circularity < 0.65:  # Lower circularity = triangle
+                        drawing_type = "triangle"
+                        confidence = 0.7
                     else:
                         drawing_type = "abstract"
                         confidence = 0.5

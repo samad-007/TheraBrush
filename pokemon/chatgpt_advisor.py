@@ -35,27 +35,46 @@ class ChatGPTAdvisor:
             return self.rule_based_suggestions(drawing_type, emotion)
         
         try:
-            # Context for the Gemini prompt
-            drawing_context = f"a sketch that appears to be a {drawing_type}"
+            # Create more specific drawing context based on type
+            drawing_descriptions = {
+                "circle": "a circular shape",
+                "square": "a square shape",
+                "rectangle": "a rectangular shape",
+                "triangle": "a triangular shape",
+                "face": "a face with facial features",
+                "person": "a person or stick figure",
+                "tree": "a tree",
+                "house": "a house or building",
+                "sun": "a sun",
+                "flower": "a flower",
+                "heart": "a heart shape",
+                "star": "a star shape",
+                "abstract": "an abstract drawing",
+                "landscape": "a landscape scene",
+                "multiple_objects": "multiple shapes or objects",
+                "dense_pattern": "an intricate pattern with many details",
+            }
+            
+            drawing_context = drawing_descriptions.get(drawing_type, f"a {drawing_type}")
             emotion_context = f"The user is feeling {emotion}"
             
             # Include previous suggestions if available
             history_context = ""
             if previous_suggestions:
-                history_context = f"Previously, I suggested: {previous_suggestions}"
+                history_context = f"\nPreviously, I suggested: {previous_suggestions}"
             
-            # Craft the prompt for Gemini
+            # Craft the prompt for Gemini with clearer instructions
             prompt = f"""
-            As an art therapy assistant, I'm helping someone with {drawing_context}. {emotion_context}.
-            {history_context}
-            
-            Please provide a single paragraph of therapeutic advice that includes:
-            1. One tool suggestion (pencil, brush, spray, or eraser)
-            2. Two color suggestions that would complement their emotional state
-            3. A specific technique or element they could add to their drawing
-            
-            Keep your response conversational, supportive, and directly focused on the art therapy benefits.
-            """
+You are an art therapy assistant. The user has just drawn {drawing_context}. {emotion_context}.{history_context}
+
+Provide a brief, encouraging therapeutic suggestion (2-3 sentences) that:
+1. Acknowledges what they drew specifically (e.g., "I see you've drawn {drawing_context}!")
+2. Suggests ONE specific drawing tool (pencil, brush, spray, or eraser) and technique
+3. Recommends TWO colors that complement their emotional state
+4. Offers a specific element they could add to enhance their drawing
+
+Be specific about the drawing type. Keep it warm, supportive, and actionable.
+"""
             
             # Configure the model
             generation_config = {
@@ -141,24 +160,48 @@ class ChatGPTAdvisor:
             circularity = details.get("circularity", 0.0)
             pixel_density = details.get("pixel_density", 0.0)
             
-            drawing_details = f"The drawing appears to be a {drawing_type}, {color_description}, with a {composition} composition."
+            # Create specific drawing descriptions
+            drawing_descriptions = {
+                "circle": "a circular shape",
+                "square": "a square",
+                "rectangle": "a rectangle",
+                "triangle": "a triangle",
+                "face": "a face with facial features",
+                "sun": "a sun",
+                "tree": "a tree",
+                "flower": "a flower",
+                "heart": "a heart",
+                "star": "a star",
+                "landscape": "a landscape scene",
+                "multiple_objects": "multiple shapes and objects",
+                "dense_pattern": "an intricate, detailed pattern",
+            }
             
-            if drawing_type == "face":
-                drawing_details += " I can see what looks like a face with facial features."
-            elif drawing_type == "landscape":
-                drawing_details += " It has a horizontal layout suggesting a landscape or scenery."
-            elif drawing_type == "sun":
-                drawing_details += " It has a circular shape that resembles a sun or similar round object."
-            elif drawing_type == "dense_pattern":
-                drawing_details += " It has a dense pattern with multiple elements close together."
-            elif drawing_type == "multiple_objects":
-                drawing_details += " It contains multiple distinct objects or elements."
-                
-            # Include level of detail
+            specific_drawing = drawing_descriptions.get(drawing_type, f"a {drawing_type}")
+            
+            drawing_details = f"The user has drawn {specific_drawing}"
+            
+            # Add color information if available
+            if colors:
+                drawing_details += f", using {', '.join(colors[:2])}"
+            
+            # Add composition details
+            if density_map:
+                if density_map[4] > sum(density_map) / 9 * 2:
+                    drawing_details += ", centered on the canvas"
+                elif density_map[0] + density_map[1] + density_map[3] > sum(density_map) / 2:
+                    drawing_details += ", positioned in the upper-left area"
+                elif density_map[2] + density_map[5] + density_map[8] > sum(density_map) / 2:
+                    drawing_details += ", positioned on the right side"
+            
+            # Add detail level
+            pixel_density = details.get("pixel_density", 0.0)
             if pixel_density < 0.05:
-                drawing_details += " The drawing is very minimal with few lines."
-            elif pixel_density > 0.3:
-                drawing_details += " The drawing is quite detailed with many lines or filled areas."
+                drawing_details += ". The drawing is minimal with simple lines."
+            elif pixel_density > 0.5:
+                drawing_details += ". The drawing has rich detail and shading."
+            else:
+                drawing_details += ". The drawing has moderate detail."
                 
             # Emotional context
             emotion_context = f"The user is currently feeling {emotion}."
@@ -170,20 +213,18 @@ class ChatGPTAdvisor:
             
             # Craft the prompt for Gemini with detailed context
             prompt = f"""
-            I'm acting as an art therapy assistant. I'm helping someone with their drawing. {drawing_details} {emotion_context}
-            {history_context}
-            
-            Please provide a detailed therapeutic suggestion that:
-            1. Acknowledges what they've drawn so far
-            2. Suggests a specific drawing technique that would work well with their current artwork (like hatching, contour lines, stippling, etc.)
-            3. Recommends a specific element they could add that would complement what they've already drawn
-            4. Suggests a tool (pencil, brush, spray, or eraser) that would work well for these additions
-            5. Recommends 1-2 colors that would enhance their drawing AND complement their current emotional state ({emotion})
-            
-            Your suggestion should be specific to what they've already drawn, helping them build upon it rather than starting something new.
-            Focus on therapeutic benefits like self-expression, emotional release, or mindfulness.
-            Keep your response conversational, supportive, and concise (about 4-5 sentences).
-            """
+You are an art therapy assistant. {drawing_details} The user is feeling {emotion}.
+{history_context if previous_suggestions else ""}
+
+Provide a warm, specific therapeutic suggestion (3-4 sentences) that:
+1. Acknowledges their {specific_drawing} specifically
+2. Suggests ONE specific drawing technique (like shading, hatching, blending, outlining, or adding texture)
+3. Recommends ONE drawing tool (pencil, brush, spray, or eraser) for the technique
+4. Suggests a specific element to add (like shadows, highlights, background elements, or details)
+5. Recommends 1-2 colors that would work well with their drawing and emotional state
+
+Be specific and encouraging. Don't use generic phrases like "what looks to be" - be confident about what they've drawn!
+"""
             
             # Configure the model
             generation_config = {

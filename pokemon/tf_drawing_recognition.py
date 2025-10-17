@@ -698,10 +698,10 @@ class DrawingRecognizerCV:
             elif has_eyes:
                 results.append({"class": "face", "confidence": 0.7})
             
-            # Check basic shapes
-            if 0.85 < circularity < 1.15:
+            # Check basic shapes FIRST (before complex patterns)
+            if 0.8 < circularity:
                 if "face" not in [r["class"] for r in results]:
-                    results.append({"class": "circle", "confidence": min(0.9, circularity)})
+                    results.append({"class": "circle", "confidence": min(0.9, circularity * 0.95)})
                 
                 height = features.get("height", 0)
                 width = features.get("width", 0)
@@ -709,19 +709,24 @@ class DrawingRecognizerCV:
                 
                 # Check if it's likely a sun (circular and in upper portion)
                 if centroid[1] < height * 0.4:
-                    results.append({"class": "sun", "confidence": 0.7})
+                    results.append({"class": "sun", "confidence": 0.75})
                 elif centroid[1] > height * 0.6:
-                    results.append({"class": "ball", "confidence": 0.6})
+                    results.append({"class": "ball", "confidence": 0.65})
                 
             # Check rectangles/squares
-            elif 0.7 < circularity < 0.85 and 0.7 < aspect_ratio < 1.3:
-                results.append({"class": "square", "confidence": 0.7})
-            elif 0.6 < circularity < 0.85 and aspect_ratio > 1.3:
-                results.append({"class": "rectangle", "confidence": 0.7})
+            elif 0.65 < circularity < 0.85:
+                if 0.8 < aspect_ratio < 1.2:
+                    results.append({"class": "square", "confidence": 0.75})
+                elif aspect_ratio > 1.3:
+                    results.append({"class": "rectangle", "confidence": 0.75})
+                elif aspect_ratio < 0.7:
+                    results.append({"class": "rectangle", "confidence": 0.7})
             
             # Check triangular shapes
-            elif 0.4 < circularity < 0.7:
-                results.append({"class": "triangle", "confidence": 0.6})
+            elif 0.4 < circularity < 0.65:
+                results.append({"class": "triangle", "confidence": 0.7})
+                if aspect_ratio < 0.8:
+                    results.append({"class": "mountain", "confidence": 0.6})
             
             # Check landscape orientation
             if aspect_ratio > 1.5:
@@ -735,19 +740,25 @@ class DrawingRecognizerCV:
                     results.append({"class": "building", "confidence": 0.6})
                     results.append({"class": "house", "confidence": 0.5})
             
-            # Check for complex patterns
-            if contour_count > 5:
+            # Check for complex patterns (multiple objects) - BEFORE dense pattern check
+            if contour_count > 8:
+                results.append({"class": "multiple_objects", "confidence": 0.7})
                 results.append({"class": "pattern", "confidence": 0.65})
                 
-            # Check for dense patterns
-            if pixel_density > 0.3:
+            # Check for dense patterns - INCREASE threshold significantly
+            # Only classify as dense_pattern if truly densely filled (>60%)
+            if pixel_density > 0.6:
                 results.append({"class": "dense_pattern", "confidence": 0.75})
                 results.append({"class": "scribble", "confidence": 0.6})
+            # Moderate density could be shading or filling
+            elif pixel_density > 0.45 and not results:
+                results.append({"class": "filled_shape", "confidence": 0.6})
             
             # If no specific classification, fall back to generic ones
             if not results:
-                results.append({"class": "abstract", "confidence": 0.6})
-                results.append({"class": "doodle", "confidence": 0.5})
+                if contour_count > 3:
+                    results.append({"class": "doodle", "confidence": 0.6})
+                results.append({"class": "abstract", "confidence": 0.5})
             
             # Sort by confidence and return top results
             results = sorted(results, key=lambda x: x["confidence"], reverse=True)
