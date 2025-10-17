@@ -1380,26 +1380,48 @@
             </div>`;
                 }
 
+                // Extract colors FIRST for highlighting
+                const colorMatches = suggestion.match(/#[0-9A-Fa-f]{6}/g) || [];
+                
+                // Highlight hex codes in the suggestion text
+                let highlightedSuggestion = suggestion;
+                colorMatches.forEach(color => {
+                    const colorBadge = `<span style="display: inline-block; background: ${color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin: 0 2px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onclick="updateBrushColor('${color}')" title="Click to use this color">${color}</span>`;
+                    highlightedSuggestion = highlightedSuggestion.replace(color, colorBadge);
+                });
+
                 suggestionsElement.innerHTML = `
-            <h4 style="margin-bottom: 10px; color: #5d6e7e;">Art Therapy Suggestion:</h4>
+            <h4 style="margin-bottom: 10px; color: #5d6e7e;">💡 Art Therapy Suggestion:</h4>
             ${analysisInfo}
-            <p style="line-height: 1.6; color: #5d6e7e; margin-top: 10px; margin-bottom: 15px;">${suggestion}</p>
-            <div id="aiActionButtons" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
+            <p style="line-height: 1.8; color: #5d6e7e; margin-top: 10px; margin-bottom: 15px; font-size: 15px;">${highlightedSuggestion}</p>
+            ${colorMatches.length > 0 ? `
+                <div style="margin: 15px 0;">
+                    <p style="font-size: 13px; color: #8d9fad; margin-bottom: 8px;">🎨 Suggested Colors (click to use):</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        ${colorMatches.map(color => `
+                            <div class="clickable-color-swatch" 
+                                 style="width: 50px; height: 50px; background: ${color}; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.2s, box-shadow 0.2s; position: relative;"
+                                 onclick="updateBrushColor('${color}')"
+                                 onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.25)';"
+                                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';"
+                                 title="Click to use ${color}">
+                                <div style="position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #8d9fad; white-space: nowrap;">${color}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            <div id="aiActionButtons" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px;"></div>
         `;
 
                 // Extract tool mentions
-                const toolMatches = suggestion.match(/try using the (\w+) tool/i) ||
-                    suggestion.match(/(\w+) tool/i);
-
-                // Extract color mentions - look for hex colors or color names
-                const colorMatches = suggestion.match(/#[0-9A-Fa-f]{6}/g) ||
-                    extractColorNames(suggestion);
+                const toolMatches = suggestion.match(/(?:use|try|using)\s+(?:the\s+)?(\w+)\s+tool/i);
 
                 // Extract technique mentions
                 const techniques = [
                     "hatching", "cross-hatching", "stippling", "contour lines",
                     "shading", "blending", "layering", "scribbling", "pointillism",
-                    "mandala", "gradient", "pattern", "texture", "negative space"
+                    "mandala", "gradient", "pattern", "texture", "negative space", "outlining"
                 ];
 
                 const techniqueMatches = [];
@@ -1412,35 +1434,18 @@
                 // Add actionable buttons
                 const actionsDiv = document.getElementById('aiActionButtons');
                 if (actionsDiv) {
-                    if (toolMatches) {
+                    if (toolMatches && toolMatches[1]) {
                         const tool = toolMatches[1].toLowerCase();
                         if (['pencil', 'brush', 'spray', 'eraser'].includes(tool)) {
                             const toolBtn = document.createElement('button');
                             toolBtn.className = 'effect-btn';
+                            toolBtn.style.cssText = 'padding: 8px 16px; font-size: 14px; font-weight: 600;';
                             toolBtn.innerHTML = `<i class="fas fa-${tool === 'pencil' ? 'pencil-alt' :
                                 tool === 'brush' ? 'paint-brush' :
-                                    tool === 'spray' ? 'spray-can' : 'eraser'}"></i> Use ${tool}`;
+                                    tool === 'spray' ? 'spray-can' : 'eraser'}"></i> Switch to ${tool.charAt(0).toUpperCase() + tool.slice(1)}`;
                             toolBtn.onclick = () => selectTool(tool);
                             actionsDiv.appendChild(toolBtn);
                         }
-                    }
-
-                    if (colorMatches && colorMatches.length > 0) {
-                        colorMatches.forEach(color => {
-                            // Create color span with data attribute
-                            const colorSpan = document.createElement('span');
-                            colorSpan.className = 'color-suggestion';
-                            colorSpan.style.backgroundColor = color;
-                            colorSpan.style.cursor = 'pointer';
-                            colorSpan.setAttribute('data-color', color); // Store the color value
-                            colorSpan.title = `Use ${color}`;
-                            colorSpan.onclick = () => {
-                                // Get color from data attribute
-                                const selectedColor = colorSpan.getAttribute('data-color');
-                                updateBrushColor(selectedColor);
-                            };
-                            actionsDiv.appendChild(colorSpan);
-                        });
                     }
 
                     if (techniqueMatches.length > 0) {

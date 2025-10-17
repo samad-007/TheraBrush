@@ -698,10 +698,11 @@ class DrawingRecognizerCV:
             elif has_eyes:
                 results.append({"class": "face", "confidence": 0.7})
             
-            # Check basic shapes FIRST (before complex patterns)
-            if 0.8 < circularity:
+            # PRIORITY 1: Check for very circular shapes (circles, suns, balls)
+            if circularity > 0.75:
                 if "face" not in [r["class"] for r in results]:
-                    results.append({"class": "circle", "confidence": min(0.9, circularity * 0.95)})
+                    confidence = min(0.92, 0.7 + circularity * 0.2)
+                    results.append({"class": "circle", "confidence": confidence})
                 
                 height = features.get("height", 0)
                 width = features.get("width", 0)
@@ -709,24 +710,30 @@ class DrawingRecognizerCV:
                 
                 # Check if it's likely a sun (circular and in upper portion)
                 if centroid[1] < height * 0.4:
-                    results.append({"class": "sun", "confidence": 0.75})
+                    results.append({"class": "sun", "confidence": 0.8})
                 elif centroid[1] > height * 0.6:
-                    results.append({"class": "ball", "confidence": 0.65})
+                    results.append({"class": "ball", "confidence": 0.7})
                 
-            # Check rectangles/squares
-            elif 0.65 < circularity < 0.85:
-                if 0.8 < aspect_ratio < 1.2:
-                    results.append({"class": "square", "confidence": 0.75})
-                elif aspect_ratio > 1.3:
-                    results.append({"class": "rectangle", "confidence": 0.75})
-                elif aspect_ratio < 0.7:
+            # PRIORITY 2: Check for square/rectangular shapes
+            elif 0.6 < circularity <= 0.75:
+                if 0.85 < aspect_ratio < 1.15:
+                    # Nearly square
+                    results.append({"class": "square", "confidence": 0.85})
+                elif 1.3 < aspect_ratio < 2.5:
+                    # Wide rectangle
+                    results.append({"class": "rectangle", "confidence": 0.8})
+                elif 0.4 < aspect_ratio < 0.75:
+                    # Tall rectangle
+                    results.append({"class": "rectangle", "confidence": 0.8})
+                else:
+                    # General rectangular shape
                     results.append({"class": "rectangle", "confidence": 0.7})
             
-            # Check triangular shapes
-            elif 0.4 < circularity < 0.65:
-                results.append({"class": "triangle", "confidence": 0.7})
-                if aspect_ratio < 0.8:
-                    results.append({"class": "mountain", "confidence": 0.6})
+            # PRIORITY 3: Check for triangular/pointed shapes
+            elif 0.35 < circularity <= 0.6:
+                results.append({"class": "triangle", "confidence": 0.75})
+                if aspect_ratio < 0.8 and contour_count == 1:
+                    results.append({"class": "mountain", "confidence": 0.65})
             
             # Check landscape orientation
             if aspect_ratio > 1.5:
