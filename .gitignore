@@ -113,3 +113,16 @@ dmypy.json
 *.key
 *.pem
 *.p12
+
+# Documentation (except README.md)
+*.md
+!README.md
+
+# Quick Draw dataset and training artifacts
+pokemon/dataset/
+pokemon/logs/
+*.png
+!pokemon/static/*.png
+!pokemon/templates/*.png
+training_history.png
+dataset_samples.png
