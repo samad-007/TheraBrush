@@ -10,7 +10,10 @@ from performance_metrics import track_face_recognition_performance, performance_
 import json
 import numpy as np
 from datetime import datetime
-import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Load API keys from environment variables
 API_KEY = os.environ.get("FACEPP_API_KEY", "")

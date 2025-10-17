@@ -1,6 +1,10 @@
 import os
 import json
+from dotenv import load_dotenv
 from performance_metrics import track_ai_performance
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Try to import Gemini API, but make it optional
 try:

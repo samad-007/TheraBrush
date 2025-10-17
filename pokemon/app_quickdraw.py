@@ -11,8 +11,12 @@ from io import BytesIO
 from PIL import Image
 import time
 import json
+from dotenv import load_dotenv
 from chatgpt_advisor import ChatGPTAdvisor
 from performance_metrics import performance_tracker, track_ai_performance
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import the Quick Draw recognizer
 try:
