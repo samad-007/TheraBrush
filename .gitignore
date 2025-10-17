@@ -48,6 +48,9 @@ venv.bak/
 *.pyc
 __pycache__/
 
+# Quick Draw cache
+.quickdrawcache/
+
 # Environment variables
 .env
 .env.local

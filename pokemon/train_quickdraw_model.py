@@ -288,14 +288,20 @@ def save_model(model, class_names):
     print(f"✅ Saved Keras model: {keras_path}")
     
     # Save in SavedModel format (for TensorFlow Serving)
-    savedmodel_path = models_dir / "drawing_model"
-    model.save(savedmodel_path)
-    print(f"✅ Saved SavedModel format: {savedmodel_path}")
+    try:
+        savedmodel_path = models_dir / "drawing_model"
+        model.export(str(savedmodel_path))
+        print(f"✅ Saved SavedModel format: {savedmodel_path}")
+    except Exception as e:
+        print(f"⚠️  Could not save SavedModel format: {e}")
     
-    # Save timestamped backup
-    backup_path = models_dir / f"drawing_model_{timestamp}"
-    model.save(backup_path)
-    print(f"✅ Saved backup: {backup_path}")
+    # Save timestamped backup in Keras format
+    try:
+        backup_path = models_dir / f"drawing_model_{timestamp}.keras"
+        model.save(backup_path)
+        print(f"✅ Saved backup: {backup_path}")
+    except Exception as e:
+        print(f"⚠️  Could not save backup: {e}")
     
     # Save class names
     class_names_path = models_dir / "class_names.txt"

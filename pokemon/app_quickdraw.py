@@ -13,7 +13,7 @@ import time
 import json
 from dotenv import load_dotenv
 from chatgpt_advisor import ChatGPTAdvisor
-from performance_metrics import performance_tracker, track_ai_performance
+from performance_metrics import performance_tracker
 
 # Load environment variables from .env file
 load_dotenv()
@@ -211,33 +211,49 @@ def get_art_suggestion():
     global last_emotion, last_suggestion, last_recognition
     
     try:
-        # Generate suggestion using Gemini
-        suggestion_result = advisor.get_therapeutic_suggestion(
-            emotion=last_emotion,
+        # Generate suggestion using Gemini (use the correct method name)
+        start_time = time.time()
+        suggestion_result = advisor.get_art_suggestions(
             drawing_type=last_recognition,
-            previous_suggestion=last_suggestion
+            emotion=last_emotion,
+            previous_suggestions=[last_suggestion] if last_suggestion else None
         )
         
-        # Track AI performance
-        track_ai_performance(
-            model_used="gemini",
-            response_time=0.5,  # Placeholder
-            success=True
+        # Track AI performance manually
+        response_time = time.time() - start_time
+        tracking_info = performance_tracker.track_gemini_request(
+            input_text=f"{last_emotion}:{last_recognition}"
         )
         
-        last_suggestion = suggestion_result.get("suggestion", "")
+        # Extract suggestion from result
+        if isinstance(suggestion_result, dict):
+            last_suggestion = suggestion_result.get("suggestion", suggestion_result.get("suggestions", [{}])[0].get("text", ""))
+        else:
+            last_suggestion = str(suggestion_result)
+        
+        # Complete tracking
+        performance_tracker.track_gemini_response(
+            tracking_info=tracking_info,
+            response_text=last_suggestion or ""
+        )
         
         print(f"\n💡 AI SUGGESTION:")
         print(f"{'='*60}")
         print(f"Emotion: {last_emotion}")
         print(f"Drawing: {last_recognition}")
-        print(f"Suggestion: {last_suggestion[:100]}...")
+        print(f"Suggestion: {last_suggestion[:100] if last_suggestion else 'No suggestion'}...")
         print(f"{'='*60}\n")
         
-        return jsonify(suggestion_result)
+        return jsonify({
+            "emotion": last_emotion,
+            "suggestion": last_suggestion or f"Keep expressing yourself through art. Your {last_recognition} drawing shows creativity!",
+            "colors": ["#FF6B6B", "#4ECDC4", "#95E1D3", "#F38181"]
+        })
     
     except Exception as e:
         print(f"❌ Error getting art suggestion: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "emotion": last_emotion,
             "suggestion": f"Keep expressing yourself through art. Your {last_recognition} drawing shows creativity!",
@@ -251,10 +267,42 @@ def get_metrics():
     Get performance metrics.
     """
     try:
-        metrics = performance_tracker.get_summary()
+        metrics = performance_tracker.get_current_metrics()
         return jsonify(metrics)
     except Exception as e:
         print(f"❌ Error getting metrics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)})
+
+@app.route('/gemini_metrics', methods=['GET'])
+def get_gemini_metrics():
+    """Get Gemini AI metrics"""
+    try:
+        metrics = performance_tracker.get_current_metrics()
+        return jsonify(metrics.get("gemini", {}))
+    except Exception as e:
+        print(f"❌ Error getting Gemini metrics: {str(e)}")
+        return jsonify({"error": str(e)})
+
+@app.route('/face_metrics', methods=['GET'])
+def get_face_metrics():
+    """Get Face recognition metrics"""
+    try:
+        metrics = performance_tracker.get_current_metrics()
+        return jsonify(metrics.get("face_recognition", {}))
+    except Exception as e:
+        print(f"❌ Error getting face metrics: {str(e)}")
+        return jsonify({"error": str(e)})
+
+@app.route('/classification_metrics', methods=['GET'])
+def get_classification_metrics():
+    """Get classification metrics"""
+    try:
+        metrics = performance_tracker.get_classification_metrics()
+        return jsonify(metrics)
+    except Exception as e:
+        print(f"❌ Error getting classification metrics: {str(e)}")
         return jsonify({"error": str(e)})
 
 @app.route('/metrics_dashboard')
