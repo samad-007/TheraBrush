@@ -1,0 +1,104 @@
+:root {
+  --primary: #9a8c98;
+  --secondary: #c9ada7;
+  --background: #f2e9e4;
+  --dark: #22223b;
+  --accent: #4a4e69;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(45deg, var(--background), #ffffff);
+  font-family: "Helvetica Neue", sans-serif;
+}
+
+.panel {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+#videoPanel {
+  background: rgba(242, 233, 228, 0.9);
+  backdrop-filter: blur(10px);
+  border-right: 2px solid var(--secondary);
+}
+
+#canvasContainer {
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: white;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.tool-btn {
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tool-btn:hover {
+  background: var(--accent);
+  transform: translateY(-2px);
+}
+
+#emotionDisplay {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: var(--dark);
+}
+
+.brush-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.brush-size {
+  width: 120px;
+  accent-color: var(--primary);
+}
+
+.export-options {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 1rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}

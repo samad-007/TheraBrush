@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Digital Art Therapy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* Light mode variables */
+            --background-color: #f8f9fa;
+            --text-color: #495057;
+            --panel-bg-primary: #f0f4f8;
+            --panel-bg-secondary: #f9f7f7;
+            --border-color: #e3e8ec;
+            --heading-color: #5d6e7e;
+            --subtitle-color: #8d9fad;
+            --card-bg: white;
+            --tool-bg: #f1f5f9;
+            --tool-hover: #e2e8f0;
+            --tool-active: #a6c8e0;
+            --tool-text: #5d6e7e;
+            --clear-btn-bg: #f1d3d3;
+            --clear-btn-color: #965a5a;
+            --slider-bg: #e2e8f0;
+            --box-shadow-light: rgba(0, 0, 0, 0.05);
+            --box-shadow-medium: rgba(0, 0, 0, 0.07);
+            --box-shadow-heavy: rgba(0, 0, 0, 0.1);
+            --loader-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Dark mode variables */
+        .dark-mode {
+            --background-color: #121212;
+            --text-color: #e0e0e0;
+            --panel-bg-primary: #1e1e1e;
+            --panel-bg-secondary: #252525;
+            --border-color: #444;
+            --heading-color: #a6c8e0;
+            --subtitle-color: #adbac7;
+            --card-bg: #2d2d2d;
+            --tool-bg: #333333;
+            --tool-hover: #444444;
+            --tool-active: #576f88;
+            --tool-text: #d0d7de;
+            --clear-btn-bg: #6e3a3a;
+            --clear-btn-color: #f1d3d3;
+            --slider-bg: #444444;
+            --box-shadow-light: rgba(0, 0, 0, 0.2);
+            --box-shadow-medium: rgba(0, 0, 0, 0.25);
+            --box-shadow-heavy: rgba(0, 0, 0, 0.3);
+            --loader-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .panel {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.5s ease;
+        }
+
+        #videoPanel {
+            flex: 0.35;
+            background: var(--panel-bg-primary);
+            border-right: 1px solid var(--border-color);
+        }
+
+        #canvasPanel {
+            flex: 0.65;
+            background: var(--panel-bg-secondary);
+        }
+
+        .panel-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            animation: fadeIn 0.8s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h2 {
+            font-weight: 600;
+            color: var(--heading-color);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: var(--subtitle-color);
+            font-size: 14px;
+        }
+
+        #videoContainer {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px var(--box-shadow-medium);
+            background-color: #000;
+            margin-bottom: 20px;
+            animation: slideIn 0.5s ease;
+        }
+
+        #webcam {
+            width: 100%;
+            display: block;
+            border-radius: 12px;
+            transform: scaleX(-1);
+        }
+
+        #canvasContainer {
+            flex: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px var(--box-shadow-medium);
+            background-color: var(--card-bg);
+            position: relative;
+            animation: fadeIn 0.8s ease;
+        }
+
+        #artCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px var(--box-shadow-light);
+            animation: slideUp 0.5s ease;
+            transition: all 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px var(--box-shadow-heavy);
+        }
+
+        #emotionDisplay {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--heading-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #emotionIcon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        #suggestions {
+            color: var(--subtitle-color);
+            line-height: 1.6;
+        }
+
+        .color-suggestion {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin: 0 5px;
+            border: 2px solid var(--card-bg);
+            box-shadow: 0 2px 5px var(--box-shadow-light);
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        #tools {
+            display: flex;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px var(--box-shadow-light);
+            align-items: center;
+            flex-wrap: wrap;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tool-section {
+            display: flex;
+            align-items: center;
+            margin-right: 25px;
+            margin-bottom: 10px;
+        }
+
+        .tool-label {
+            font-size: 14px;
+            color: var(--subtitle-color);
+            margin-right: 10px;
+        }
+
+        #colorPicker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            background: transparent;
+            transition: transform 0.2s ease;
+        }
+
+        #colorPicker:hover {
+            transform: scale(1.1);
+        }
+
+        .tool-btn {
+            background: var(--tool-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            color: var(--tool-text);
+            font-weight: 500;
+        }
+
+        .tool-btn i {
+            margin-right: 5px;
+        }
+
+        .tool-btn:hover {
+            background: var(--tool-hover);
+        }
+
+        .tool-btn.active {
+            background: var(--tool-active);
+            color: var(--card-bg);
+        }
+
+        #clearCanvas {
+            background: var(--clear-btn-bg);
+            color: var(--clear-btn-color);
+            margin-left: auto;
+        }
+
+        #clearCanvas:hover {
+            background: var(--clear-btn-bg);
+            filter: brightness(110%);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-right: 25px;
+        }
+
+        .size-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 120px;
+            height: 6px;
+            border-radius: 5px;
+            background: var(--slider-bg);
+            outline: none;
+            margin: 0 10px;
+            transition: opacity 0.2s, background 0.3s ease;
+        }
+
+        .size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--tool-active);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s ease;
+        }
+
+        .size-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .size-value {
+            font-size: 14px;
+            color: var(--subtitle-color);
+            width: 30px;
+            text-align: center;
+        }
+
+        /* Advanced drawing tools section */
+        #advancedTools {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 4px 10px var(--box-shadow-light);
+            animation: slideUp 0.9s ease;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tool-group {
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .tool-group-title {
+            font-size: 13px;
+            color: var(--subtitle-color);
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .tool-group-content {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .effect-btn {
+            font-size: 12px;
+            padding: 6px 10px;
+            margin: 0 5px 5px 0;
+            border: none;
+            border-radius: 5px;
+            background: var(--tool-bg);
+            color: var(--tool-text);
+            cursor: pointer;
+            transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .effect-btn:hover {
+            background: var(--tool-hover);
+            transform: translateY(-2px);
+        }
+
+        .effect-btn.active {
+            background: var(--tool-active);
+            color: var(--card-bg);
+        }
+
+        #undoRedo {
+            margin-left: auto;
+            display: flex;
+        }
+
+        .history-btn {
+            background: var(--tool-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease, background-color 0.3s ease;
+            color: var(--tool-text);
+        }
+
+        .history-btn:hover {
+            background: var(--tool-hover);
+            transform: translateY(-2px);
+        }
+
+        .history-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loader */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--loader-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--slider-bg);
+            border-top: 5px solid var(--tool-active);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Dark mode toggle button */
+        #darkModeToggle {
+            background: var(--tool-bg);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--tool-text);
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        #darkModeToggle:hover {
+            background: var(--tool-hover);
+            transform: rotate(30deg);
+        }
+
+        /* Animations */
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Popover for brush preview */
+        #brushPreview {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.6;
+            display: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body></body>
+<!-- Loader -->
+<div class="loader" id="loader">
+    <div class="spinner"></div>
+</div>
+
+<!-- Left Panel -->
+<div class="panel" id="videoPanel">
+    <div class="panel-header">
+        <div>
+            <h2>Expression Analysis</h2>
+            <div class="subtitle">Capturing your emotions in real-time</div>
+        </div>
+        <div>
+            <button id="darkModeToggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+            <a href="/metrics_dashboard" target="_blank" style="text-decoration: none; margin-left: 10px;">
+                <button title="View Metrics Dashboard"
+                    style="background: none; border: none; color: var(--tool-text); cursor: pointer;">
+                    <i class="fas fa-chart-line"></i>
+                </button>
+            </a>
+        </div>
+    </div>
+
+    <div id="videoContainer">
+        <video id="webcam" height="auto" autoplay></video>
+    </div>
+
+    <div class="info-card">
+        <div id="emotionDisplay">
+            <span id="emotionIcon">😊</span>
+            <span id="emotionText">Detecting emotions...</span>
+        </div>
+        <div id="suggestions">
+            <div id="colorSuggestions">
+                <p>Suggested Colors:</p>
+                <div id="suggestedColors"></div>
+            </div>
+            <p id="toolSuggestion">Recommended Tool: Pencil</p>
+        </div>
+    </div>
+</div>
+
+<!-- Right Panel -->
+<div class="panel" id="canvasPanel">
+    <div class="panel-header">
+        <h2>Creative Canvas</h2>
+        <div class="subtitle">Express yourself through art</div>
+    </div>
+
+    <div id="canvasContainer">
+        <canvas id="artCanvas"></canvas>
+        <div id="brushPreview"></div>
+    </div>
+
+    <div id="tools">
+        <div class="tool-section">
+            <span class="tool-label">Color:</span>
+            <input type="color" id="colorPicker" value="#a6c8e0">
+        </div>
+
+        <div class="tool-section">
+            <span class="tool-label">Tool:</span>
+            <button class="tool-btn active" data-brush="pencil"><i class="fas fa-pencil-alt"></i> Pencil</button>
+            <button class="tool-btn" data-brush="brush"><i class="fas fa-paint-brush"></i> Brush</button>
+            <button class="tool-btn" data-brush="spray"><i class="fas fa-spray-can"></i> Spray</button>
+            <button class="tool-btn" data-brush="eraser"><i class="fas fa-eraser"></i> Eraser</button>
+        </div>
+
+        <div class="slider-container">
+            <span class="tool-label">Size:</span>
+            <input type="range" min="1" max="50" value="2" class="size-slider" id="brushSize">
+            <span id="sizeValue" class="size-value">2</span>
+        </div>
+
+        <button id="clearCanvas"><i class="fas fa-trash-alt"></i> Clear</button>
+    </div>
+
+    <div id="advancedTools">
+        <div class="tool-group">
+            <div class="tool-group-title">Effects</div>
+            <div class="tool-group-content">
+                <button class="effect-btn" data-effect="none">None</button>
+                <button class="effect-btn" data-effect="shadow">Shadow</button>
+                <button class="effect-btn" data-effect="glow">Glow</button>
+                <button class="effect-btn" data-effect="rainbow">Rainbow</button>
+            </div>
+        </div>
+
+        <div class="tool-group">
+            <div class="tool-group-title">Opacity</div>
+            <input type="range" min="1" max="100" value="100" class="size-slider" id="opacitySlider">
+        </div>
+
+        <div id="undoRedo">
+            <button class="history-btn" id="undoBtn" disabled><i class="fas fa-undo"></i></button>
+            <button class="history-btn" id="redoBtn" disabled><i class="fas fa-redo"></i></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+
+<script>
+    // Canvas Setup
+    const canvasContainer = document.getElementById('canvasContainer');
+    const canvasEl = document.getElementById('artCanvas');
+    const brushPreview = document.getElementById('brushPreview');
+    let canvas;
+    let historyStack = [];
+    let redoStack = [];
+
+    // Set canvas dimensions to match container
+    function resizeCanvas() {
+        canvasEl.width = canvasContainer.clientWidth;
+        canvasEl.height = canvasContainer.clientHeight;
+        if (canvas) {
+            canvas.setDimensions({
+                width: canvasContainer.clientWidth,
+                height: canvasContainer.clientHeight
+            });
+        }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    canvas = new fabric.Canvas('artCanvas', {
+        isDrawingMode: true
+    });
+
+    // Initialize history tracking
+    canvas.on('object:added', function () {
+        // This is a new drawing operation, so clear redo stack
+        redoStack = [];
+        document.getElementById('redoBtn').disabled = true;
+        saveToHistory();
+    });
+
+    canvas.on('object:modified', function () {
+        // This is a new modification, so clear redo stack
+        redoStack = [];
+        document.getElementById('redoBtn').disabled = true;
+        saveToHistory();
+    });
+
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeIcon = darkModeToggle.querySelector('i');
+
+    // Check for saved preference in localStorage
+    function loadThemePreference() {
+        const darkMode = localStorage.getItem('darkMode') === 'true';
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+            darkModeIcon.classList.remove('fa-moon');
+            darkModeIcon.classList.add('fa-sun');
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkModeIcon.classList.remove('fa-sun');
+            darkModeIcon.classList.add('fa-moon');
+        }
+    }
+
+    // Toggle dark mode
+    function toggleDarkMode() {
+        const isDarkMode = document.body.classList.toggle('dark-mode');
+
+        // Update icon
+        if (isDarkMode) {
+            darkModeIcon.classList.remove('fa-moon');
+            darkModeIcon.classList.add('fa-sun');
+        } else {
+            darkModeIcon.classList.remove('fa-sun');
+            darkModeIcon.classList.add('fa-moon');
+        }
+
+        // Save preference
+        localStorage.setItem('darkMode', isDarkMode);
+
+        // Refresh the canvas to update colors if needed
+        if (canvas) {
+            canvas.renderAll();
+        }
+
+        // If eraser is currently active, update it for the new theme
+        if (activeTool === 'eraser') {
+            selectTool('eraser');
+        }
+    }
+
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+
+    // Load saved theme preference
+    loadThemePreference();
+
+    function saveToHistory() {
+        const json = JSON.stringify(canvas);
+        historyStack.push(json);
+        if (historyStack.length > 50) historyStack.shift(); // Limit history size
+        document.getElementById('undoBtn').disabled = false;
+        // Don't clear redo stack here - we clear it only when a new drawing operation is made
+        if (redoStack.length === 0) {
+            document.getElementById('redoBtn').disabled = true;
+        }
+    }
+
+    function undo() {
+        if (historyStack.length > 1) {  // We need at least 2 states to undo (current + previous)
+            const currentState = historyStack.pop();
+            redoStack.push(currentState);
+            document.getElementById('redoBtn').disabled = false;
+
+            const prevState = historyStack[historyStack.length - 1];
+            canvas.loadFromJSON(prevState, canvas.renderAll.bind(canvas));
+
+            if (historyStack.length <= 1) {
+                document.getElementById('undoBtn').disabled = true;
+            }
+        }
+    }
+
+    function redo() {
+        if (redoStack.length > 0) {
+            const nextState = redoStack.pop();
+            historyStack.push(nextState);
+            document.getElementById('undoBtn').disabled = false;
+
+            canvas.loadFromJSON(nextState, canvas.renderAll.bind(canvas));
+
+            if (redoStack.length === 0) {
+                document.getElementById('redoBtn').disabled = true;
+            }
+        }
+    }
+
+    // Set initial color
+    canvas.freeDrawingBrush.color = '#a6c8e0';
+
+    // Brush Implementation
+
+
+    function createPencilBrush() {
+        let brush = new fabric.PencilBrush(canvas);
+        brush.color = document.getElementById('colorPicker').value;
+        brush.width = parseInt(document.getElementById('brushSize').value);
+
+        // Apply opacity more effectively
+        const opacity = parseInt(document.getElementById('opacitySlider').value) / 100;
+        const color = document.getElementById('colorPicker').value;
+        const rgbaColor = convertToRgba(color, opacity);
+        brush.color = rgbaColor;
+
+        return brush;
+    }
+
+    function createBrush() {
+        let brush = new fabric.PencilBrush(canvas);
+        brush.width = parseInt(document.getElementById('brushSize').value);
+
+        // Apply opacity more effectively
+        const opacity = parseInt(document.getElementById('opacitySlider').value) / 100;
+        const color = document.getElementById('colorPicker').value;
+        const rgbaColor = convertToRgba(color, opacity);
+        brush.color = rgbaColor;
+
+        return brush;
+    }
+
+    function createSprayBrush() {
+        let brush = new fabric.SprayBrush(canvas);
+        brush.width = parseInt(document.getElementById('brushSize').value) * 2;
+        brush.density = parseInt(document.getElementById('brushSize').value) / 2;
+
+        // Apply opacity more effectively
+        const opacity = parseInt(document.getElementById('opacitySlider').value) / 100;
+        const color = document.getElementById('colorPicker').value;
+        const rgbaColor = convertToRgba(color, opacity);
+        brush.color = rgbaColor;
+
+        return brush;
+    }
+    function createEraser() {
+        // Using the EraserBrush if available, otherwise using PencilBrush with appropriate color
+        let brush;
+        // Check if we're in dark mode to select appropriate eraser color
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const eraserColor = isDarkMode ? '#2d2d2d' : 'white'; // Use dark bg color in dark mode
+
+        if (fabric.EraserBrush) {
+            brush = new fabric.EraserBrush(canvas);
+        } else {
+            brush = new fabric.PencilBrush(canvas);
+            brush.color = eraserColor;
+        }
+        brush.width = parseInt(document.getElementById('brushSize').value);
+        return brush;
+    }
+
+    // Add this helper function to better handle opacity
+    function convertToRgba(hex, opacity) {
+        // Convert hex to rgb
+        let r = 0, g = 0, b = 0;
+
+        // 3 digits
+        if (hex.length == 4) {
+            r = parseInt(hex[1] + hex[1], 16);
+            g = parseInt(hex[2] + hex[2], 16);
+            b = parseInt(hex[3] + hex[3], 16);
+        }
+        // 6 digits
+        else if (hex.length == 7) {
+            r = parseInt(hex.substring(1, 3), 16);
+            g = parseInt(hex.substring(3, 5), 16);
+            b = parseInt(hex.substring(5, 7), 16);
+        }
+
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Active tool & effect tracking
+    let activeTool = 'pencil';
+    let activeEffect = 'none';
+    let rainbowHue = 0;
+
+    // Webcam Setup
+    const video = document.getElementById('webcam');
+    navigator.mediaDevices.getUserMedia({
+        video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        }
+    })
+        .then(stream => {
+            video.srcObject = stream;
+            video.play();
+        })
+        .catch(err => {
+            console.error("Error accessing webcam:", err);
+            document.getElementById('emotionText').textContent = "Camera access denied";
+            document.getElementById('emotionIcon').textContent = "❌";
+        });
+
+    // Emotion Icons
+    const emotionIcons = {
+        happy: "😊",
+        neutral: "😐",
+        sad: "😔",
+        surprised: "😲",
+        angry: "😠"
+    };
+
+    // Emotion Detection
+    let model;
+    let lastEmotion = 'neutral';
+
+    async function detectEmotion() {
+        try {
+            if (!model) {
+                document.getElementById('emotionText').textContent = "Loading face detection model...";
+                model = await blazeface.load();
+                document.getElementById('emotionText').textContent = "Model loaded, detecting emotions...";
+            }
+
+            const predictions = await model.estimateFaces(video, false);
+            if (predictions.length > 0) {
+                // Emotion analysis logic using landmarks
+                const features = predictions[0].landmarks;
+                const emotion = analyzeFeatures(features);
+
+                if (emotion !== lastEmotion) {
+                    updateSuggestions(emotion);
+                    lastEmotion = emotion;
+                }
+            } else {
+                // No face detected
+                if (lastEmotion !== 'neutral') {
+                    updateSuggestions('neutral');
+                    lastEmotion = 'neutral';
+                }
+            }
+
+            // Slow down the detection rate to reduce CPU usage and prevent flicker
+            setTimeout(() => {
+                requestAnimationFrame(detectEmotion);
+            }, 500); // Check every 500ms instead of every frame
+        } catch (error) {
+            console.error("Error in emotion detection:", error);
+            setTimeout(() => {
+                requestAnimationFrame(detectEmotion);
+            }, 1000);
+        }
+    }
+
+    function analyzeFeatures(features) {
+        // More stable emotion detection based on face landmarks
+        // This is a simplified approach that avoids random changes
+        if (!features || features.length < 5) return 'neutral';
+
+        // Use distance between eyes and nose to estimate emotion
+        // In a real implementation, you would use a proper emotion detection model
+        const leftEye = features[1];
+        const rightEye = features[0];
+        const nose = features[2];
+        const mouth = features[3];
+
+        // Calculate some basic facial metrics
+        const eyeDistance = Math.sqrt(
+            Math.pow(rightEye[0] - leftEye[0], 2) +
+            Math.pow(rightEye[1] - leftEye[1], 2)
+        );
+
+        const mouthToNoseDistance = Math.sqrt(
+            Math.pow(mouth[0] - nose[0], 2) +
+            Math.pow(mouth[1] - nose[1], 2)
+        );
+
+        // Stabilize emotion with a timer to prevent rapid switching
+        const now = Date.now();
+        if (window.lastEmotionTime && now - window.lastEmotionTime < 3000) {
+            return lastEmotion; // Keep the same emotion for at least 3 seconds
+        }
+
+        window.lastEmotionTime = now;
+
+        // Simple heuristic for emotion detection
+        if (mouthToNoseDistance > eyeDistance * 0.7) return 'happy';
+        if (mouthToNoseDistance < eyeDistance * 0.4) return 'sad';
+        if (eyeDistance > 50) return 'surprised';
+        if (eyeDistance < 30) return 'angry';
+
+        return 'neutral';
+        // Simplified emotion detection (replace with actual model)
+        const emotions = ['happy', 'neutral', 'sad', 'surprised', 'angry'];
+        const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+
+        return randomEmotion;
+    }
+
+    function updateSuggestions(emotion) {
+        // Muted color palettes
+        const suggestions = {
+            happy: {
+                colors: ['#c9b181', '#d4a373', '#e9c46a'],
+                brush: 'brush',
+                size: 15
+            },
+            neutral: {
+                colors: ['#a6c8e0', '#8c9caa', '#a7b3a5'],
+                brush: 'pencil',
+                size: 2
+            },
+            sad: {
+                colors: ['#8db1c8', '#94a7b6', '#9b98b7'],
+                brush: 'brush',
+                size: 10
+            },
+            surprised: {
+                colors: ['#d3b0b5', '#a7c4bc', '#c6c2e0'],
+                brush: 'spray',
+                size: 20
+            },
+            angry: {
+                colors: ['#bc8e7e', '#bb9490', '#b7a69e'],
+                brush: 'pencil',
+                size: 5
+            }
+        };
+
+        const suggestion = suggestions[emotion] || suggestions.neutral;
+
+        // Update emotion display with animation
+        const emotionIcon = document.getElementById('emotionIcon');
+        emotionIcon.style.animation = 'none';
+        setTimeout(() => {
+            emotionIcon.style.animation = 'pulse 1.5s infinite';
+        }, 10);
+
+        document.getElementById('emotionText').textContent = `Detected Mood: ${emotion}`;
+        emotionIcon.textContent = emotionIcons[emotion] || "😐";
+
+        // Update color suggestions with animation
+        const colorsContainer = document.getElementById('suggestedColors');
+        colorsContainer.innerHTML = '';
+
+        suggestion.colors.forEach((color, index) => {
+            const colorEl = document.createElement('span');
+            colorEl.className = 'color-suggestion';
+            colorEl.style.backgroundColor = color;
+            colorEl.style.animation = `fadeIn 0.5s ease ${index * 0.1}s forwards`;
+            colorEl.style.opacity = 0;
+            colorEl.setAttribute('data-color', color); // Store the original color value
+            colorEl.addEventListener('click', () => {
+                // Get the original color value
+                const selectedColor = colorEl.getAttribute('data-color');
+
+                // Use the updateBrushColor function to properly update everything
+                updateBrushColor(selectedColor);
+
+                // If we're currently using the eraser, switch to pencil
+                if (activeTool === 'eraser') {
+                    selectTool('pencil');
+                } else {
+                    // Otherwise just update the current tool
+                    selectTool(activeTool);
+                }
+            });
+            colorsContainer.appendChild(colorEl);
+        });
+
+        // Update tool suggestion
+        document.getElementById('toolSuggestion').textContent = `Recommended Tool: ${suggestion.brush.charAt(0).toUpperCase() + suggestion.brush.slice(1)}`;
+    }
+
+    function updateBrushColor(color) {
+        // Convert color name to hex if needed
+        let hexColor = color;
+
+        // Make sure we have a proper hex color format
+        if (color.startsWith('#')) {
+            // It's already a hex color, ensure it's formatted correctly
+            if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                // If it's a shorthand hex (#abc instead of #aabbcc), expand it
+                if (/^#[0-9A-Fa-f]{3}$/.test(color)) {
+                    hexColor = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+                } else {
+                    // Invalid hex format, fallback to default
+                    console.warn("Invalid hex color format:", color);
+                    hexColor = '#a6c8e0';
+                }
+            }
+        } else {
+            // Try to convert a color name using a hidden div
+            const tempDiv = document.createElement('div');
+            tempDiv.style.color = color;
+            document.body.appendChild(tempDiv);
+            const computedColor = window.getComputedStyle(tempDiv).color;
+            document.body.removeChild(tempDiv);
+
+            // Convert rgb to hex
+            if (computedColor.startsWith('rgb')) {
+                const rgbValues = computedColor.match(/\d+/g);
+                if (rgbValues && rgbValues.length === 3) {
+                    hexColor = '#' + rgbValues.map(val => parseInt(val).toString(16).padStart(2, '0')).join('');
+                }
+            }
+        }
+
+        // Update the color picker input value
+        document.getElementById('colorPicker').value = hexColor;
+
+        if (activeTool !== 'eraser') {
+            const opacity = parseInt(document.getElementById('opacitySlider').value) / 100;
+            const rgbaColor = convertToRgba(hexColor, opacity);
+            canvas.freeDrawingBrush.color = rgbaColor;
+        }
+        updateBrushPreview();
+    }
+
+    function updateOpacity(opacity) {
+        if (activeTool !== 'eraser') {
+            const color = document.getElementById('colorPicker').value;
+            const rgbaColor = convertToRgba(color, opacity / 100);
+            canvas.freeDrawingBrush.color = rgbaColor;
+        }
+        updateBrushPreview();
+    }
+
+    function updateBrushSize(size) {
+        canvas.freeDrawingBrush.width = parseInt(size);
+        updateBrushPreview();
+    }
+
+    function updateBrushPreview() {
+        // Update the brush preview element
+        const size = parseInt(document.getElementById('brushSize').value);
+        const color = activeTool === 'eraser' ? 'white' : document.getElementById('colorPicker').value;
+        const opacity = parseInt(document.getElementById('opacitySlider').value) / 100;
+
+        brushPreview.style.width = `${size}px`;
+        brushPreview.style.height = `${size}px`;
+        brushPreview.style.backgroundColor = color;
+        brushPreview.style.opacity = activeTool === 'eraser' ? 0.8 : opacity;
+
+        if (activeEffect === 'shadow') {
+            brushPreview.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
+        } else if (activeEffect === 'glow') {
+            brushPreview.style.boxShadow = `0 0 8px ${color}`;
+        } else {
+            brushPreview.style.boxShadow = 'none';
+        }
+    }
+
+    function selectTool(toolName) {
+        // Update active tool
+        activeTool = toolName;
+
+        // Set active class on button
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.brush === toolName);
+        });
+
+        // Create appropriate brush based on tool type
+        switch (toolName) {
+            case 'pencil':
+                canvas.freeDrawingBrush = createPencilBrush();
+                break;
+            case 'brush':
+                canvas.freeDrawingBrush = createBrush();
+                break;
+            case 'spray':
+                canvas.freeDrawingBrush = createSprayBrush();
+                break;
+            case 'eraser':
+                canvas.freeDrawingBrush = createEraser();
+                break;
+            default:
+                canvas.freeDrawingBrush = createPencilBrush();
+        }
+
+        // Apply the current effect
+        applyEffect(activeEffect);
+        updateBrushPreview();
+    }
+
+    function applyEffect(effectName) {
+        activeEffect = effectName;
+
+        document.querySelectorAll('.effect-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.effect === effectName);
+        });
+
+        if (effectName === 'rainbow' && activeTool !== 'eraser') {
+            startRainbowEffect();
+        } else {
+            stopRainbowEffect();
+
+            if (effectName === 'shadow' && activeTool !== 'eraser') {
+                canvas.freeDrawingBrush.shadow = new fabric.Shadow({
+                    color: 'rgba(0,0,0,0.3)',
+                    blur: 5,
+                    offsetX: 2,
+                    offsetY: 2
+                });
+            } else if (effectName === 'glow' && activeTool !== 'eraser') {
+                const color = document.getElementById('colorPicker').value;
+                canvas.freeDrawingBrush.shadow = new fabric.Shadow({
+                    color: color,
+                    blur: 10,
+                    offsetX: 0,
+                    offsetY: 0
+                });
+            } else {
+                canvas.freeDrawingBrush.shadow = null;
+            }
+        }
+
+        updateBrushPreview();
+    }
+
+    let rainbowInterval;
+
+    function startRainbowEffect() {
+        stopRainbowEffect(); // Clear any existing interval
+
+        rainbowInterval = setInterval(() => {
+            rainbowHue = (rainbowHue + 1) % 360;
+            const color = `hsl(${rainbowHue}, 100%, 50%)`;
+            if (activeTool !== 'eraser') {
+                document.getElementById('colorPicker').value = color;
+                canvas.freeDrawingBrush.color = color;
+                updateBrushPreview();
+            }
+        }, 50);
+    }
+
+    function stopRainbowEffect() {
+        if (rainbowInterval) {
+            clearInterval(rainbowInterval);
+            rainbowInterval = null;
+        }
+    }
+
+    // Canvas Tools Event Listeners
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectTool(btn.dataset.brush);
+        });
+    });
+
+    document.querySelectorAll('.effect-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            applyEffect(btn.dataset.effect);
+        });
+    });
+
+    document.getElementById('colorPicker').addEventListener('input', (e) => {
+        if (activeTool !== 'eraser' && activeEffect !== 'rainbow') {
+            canvas.freeDrawingBrush.color = e.target.value;
+            updateBrushPreview();
+        }
+    });
+
+    document.getElementById('brushSize').addEventListener('input', (e) => {
+        const size = parseInt(e.target.value);
+        document.getElementById('sizeValue').textContent = size;
+
+        if (activeTool === 'spray') {
+            canvas.freeDrawingBrush.width = size * 2;
+            canvas.freeDrawingBrush.density = size / 2;
+        } else {
+            canvas.freeDrawingBrush.width = size;
+        }
+
+        updateBrushPreview();
+    });
+
+    document.getElementById('opacitySlider').addEventListener('input', (e) => {
+        const opacity = parseInt(e.target.value);
+        updateOpacity(opacity);
+
+        // Re-select the tool to refresh brush with new opacity
+        selectTool(activeTool);
+    });
+
+    document.getElementById('clearCanvas').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the canvas?')) {
+            saveToHistory(); // Save current state before clearing
+            canvas.clear();
+        }
+    });
+
+    document.getElementById('undoBtn').addEventListener('click', undo);
+    document.getElementById('redoBtn').addEventListener('click', redo);
+
+    // Brush preview position tracker
+    canvasContainer.addEventListener('mousemove', (e) => {
+        const rect = canvasContainer.getBoundingClientRect();
+        brushPreview.style.left = (e.clientX - rect.left - parseInt(brushPreview.style.width) / 2) + 'px';
+        brushPreview.style.top = (e.clientY - rect.top - parseInt(brushPreview.style.height) / 2) + 'px';
+    });
+
+    canvasContainer.addEventListener('mouseenter', () => {
+        brushPreview.style.display = 'block';
+    });
+
+    canvasContainer.addEventListener('mouseleave', () => {
+        brushPreview.style.display = 'none';
+    });
+
+    // Initialize
+    selectTool('pencil');
+    applyEffect('none');
+    updateBrushPreview();
+    resizeCanvas();
+
+    // Wait for all resources to load
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            saveToHistory(); // Initialize history with empty canvas
+        }, 1000);
+
+        // Start detecting emotions
+        detectEmotion();
+    });
+
+    function setupWebcamCapture() {
+        // Create a canvas for capturing images
+        const captureCanvas = document.createElement('canvas');
+        const captureContext = captureCanvas.getContext('2d');
+
+        // Set capture dimensions
+        captureCanvas.width = 300;
+        captureCanvas.height = 225;
+
+        // Function to capture and upload image
+        function captureAndUpload() {
+            if (!video.videoWidth) return; // Skip if video not loaded
+
+            // Draw current video frame to canvas
+            captureContext.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+
+            // Convert to base64
+            const imageData = captureCanvas.toDataURL('image/png');
+
+            // Send to server
+            fetch('/upload_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        // Fetch the updated emotions after successful upload
+                        setTimeout(fetchEmotions, 1000); // Wait 1 second for processing
+                    }
+                })
+                .catch(error => console.error('Error uploading image:', error));
+        }
+
+        // Function to fetch emotions from server
+        function fetchEmotions() {
+            fetch('/get_emotions')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.emotions) {
+                        // Parse the emotions string into an object
+                        const emotionsText = data.emotions;
+                        const emotionLines = emotionsText.split('\n').filter(line => line.trim() !== '');
+
+                        // Extract the top emotion
+                        if (emotionLines.length > 0) {
+                            const topEmotionParts = emotionLines[0].split(':');
+                            if (topEmotionParts.length >= 2) {
+                                // Get emotion name and normalize it to lowercase
+                                const emotion = topEmotionParts[0].trim().toLowerCase();
+
+                                // Update the UI with detected emotion
+                                updateEmoji(emotion);
+
+                                // Get art suggestion based on the emotion
+                                fetchArtSuggestion();
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching emotions:', error));
+        }
+
+        // Function to fetch art suggestions from server
+        function fetchArtSuggestion() {
+            fetch('/get_art_suggestion')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.suggestion) {
+                        // Update the suggestion in the UI
+                        updateAISuggestions(data.suggestion);
+                    }
+                })
+                .catch(error => console.error('Error fetching art suggestion:', error));
+        }
+
+        // Function to update the AI suggestions UI
+        function updateAISuggestions(suggestion, analysis = null) {
+            const suggestionsElement = document.getElementById('suggestions');
+            if (suggestionsElement) {
+                let analysisInfo = '';
+
+                // If we have analysis data, show some of it
+                if (analysis) {
+                    const drawingType = analysis.drawing_type || 'artwork';
+                    const confidence = analysis.confidence || 0;
+                    const colors = analysis.details?.colors || [];
+
+                    analysisInfo = `<div class="analysis-info">
+                <span style="font-size: 12px; color: #8d9fad;">Drawing type: ${drawingType} (${Math.round(confidence * 100)}% confidence)</span>
+                ${colors.length > 0 ?
+                            `<div class="color-palette" style="display: flex; gap: 3px; margin-top: 5px;">
+                        ${colors.map(color => `
+                            <div style="width: 15px; height: 15px; background-color: ${color}; border-radius: 50%;"></div>
+                        `).join('')}
+                    </div>` :
+                            ''}
+            </div>`;
+                }
+
+                suggestionsElement.innerHTML = `
+            <h4 style="margin-bottom: 10px; color: #5d6e7e;">Art Therapy Suggestion:</h4>
+            ${analysisInfo}
+            <p style="line-height: 1.6; color: #5d6e7e; margin-top: 10px; margin-bottom: 15px;">${suggestion}</p>
+            <div id="aiActionButtons" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
+        `;
+
+                // Extract tool mentions
+                const toolMatches = suggestion.match(/try using the (\w+) tool/i) ||
+                    suggestion.match(/(\w+) tool/i);
+
+                // Extract color mentions - look for hex colors or color names
+                const colorMatches = suggestion.match(/#[0-9A-Fa-f]{6}/g) ||
+                    extractColorNames(suggestion);
+
+                // Extract technique mentions
+                const techniques = [
+                    "hatching", "cross-hatching", "stippling", "contour lines",
+                    "shading", "blending", "layering", "scribbling", "pointillism",
+                    "mandala", "gradient", "pattern", "texture", "negative space"
+                ];
+
+                const techniqueMatches = [];
+                techniques.forEach(technique => {
+                    if (suggestion.toLowerCase().includes(technique)) {
+                        techniqueMatches.push(technique);
+                    }
+                });
+
+                // Add actionable buttons
+                const actionsDiv = document.getElementById('aiActionButtons');
+                if (actionsDiv) {
+                    if (toolMatches) {
+                        const tool = toolMatches[1].toLowerCase();
+                        if (['pencil', 'brush', 'spray', 'eraser'].includes(tool)) {
+                            const toolBtn = document.createElement('button');
+                            toolBtn.className = 'effect-btn';
+                            toolBtn.innerHTML = `<i class="fas fa-${tool === 'pencil' ? 'pencil-alt' :
+                                tool === 'brush' ? 'paint-brush' :
+                                    tool === 'spray' ? 'spray-can' : 'eraser'}"></i> Use ${tool}`;
+                            toolBtn.onclick = () => selectTool(tool);
+                            actionsDiv.appendChild(toolBtn);
+                        }
+                    }
+
+                    if (colorMatches && colorMatches.length > 0) {
+                        colorMatches.forEach(color => {
+                            // Create color span with data attribute
+                            const colorSpan = document.createElement('span');
+                            colorSpan.className = 'color-suggestion';
+                            colorSpan.style.backgroundColor = color;
+                            colorSpan.style.cursor = 'pointer';
+                            colorSpan.setAttribute('data-color', color); // Store the color value
+                            colorSpan.title = `Use ${color}`;
+                            colorSpan.onclick = () => {
+                                // Get color from data attribute
+                                const selectedColor = colorSpan.getAttribute('data-color');
+                                updateBrushColor(selectedColor);
+                            };
+                            actionsDiv.appendChild(colorSpan);
+                        });
+                    }
+
+                    if (techniqueMatches.length > 0) {
+                        const techniqueBtn = document.createElement('button');
+                        techniqueBtn.className = 'effect-btn';
+                        techniqueBtn.innerHTML = `<i class="fas fa-info-circle"></i> ${techniqueMatches[0]}`;
+                        techniqueBtn.title = 'Click to learn about this technique';
+                        techniqueBtn.onclick = () => showTechniqueHelp(techniqueMatches[0]);
+                        actionsDiv.appendChild(techniqueBtn);
+                    }
+                }
+            }
+        }
+
+        // Add a function to show technique help
+        function showTechniqueHelp(technique) {
+            const techniqueInfo = {
+                "hatching": {
+                    title: "Hatching",
+                    description: "Create closely spaced parallel lines to add depth and shadow. Try varying the spacing and direction for different effects.",
+                    image: "https://i.imgur.com/6GPFnvZ.jpg"
+                },
+                "cross-hatching": {
+                    title: "Cross-Hatching",
+                    description: "Add a second layer of hatching at a different angle to create richer textures and darker values.",
+                    image: "https://i.imgur.com/jHBxsom.jpg"
+                },
+                "stippling": {
+                    title: "Stippling",
+                    description: "Create texture and shading using small dots. More dots closer together = darker areas.",
+                    image: "https://i.imgur.com/JQJwcSw.jpg"
+                },
+                "contour lines": {
+                    title: "Contour Lines",
+                    description: "Draw lines that follow the shape or form of your subject to create volume and dimension.",
+                    image: "https://i.imgur.com/MQXNAJQ.jpg"
+                },
+                "shading": {
+                    title: "Shading",
+                    description: "Add gradations of light and dark to create the illusion of form and depth. Think about where the light source is coming from.",
+                    image: "https://i.imgur.com/0zSQEYn.jpg"
+                },
+                "blending": {
+                    title: "Blending",
+                    description: "Smoothly transition between colors or tones by gently mixing them together.",
+                    image: "https://i.imgur.com/JqaLMzs.jpg"
+                },
+                "layering": {
+                    title: "Layering",
+                    description: "Build up multiple transparent layers to create rich depth and complex colors.",
+                    image: "https://i.imgur.com/UVEVv5G.jpg"
+                },
+                "scribbling": {
+                    title: "Scribbling",
+                    description: "Use loose, expressive mark-making to create energy and movement. Great for releasing emotions!",
+                    image: "https://i.imgur.com/hGZ8Xlp.jpg"
+                },
+                "pointillism": {
+                    title: "Pointillism",
+                    description: "Create images using small, distinct dots of color that blend visually when viewed from a distance.",
+                    image: "https://i.imgur.com/8JLhHF7.jpg"
+                },
+                "mandala": {
+                    title: "Mandala",
+                    description: "Create a circular, symmetrical pattern that radiates from the center. Very meditative to create!",
+                    image: "https://i.imgur.com/XBs0WGZ.jpg"
+                },
+                "gradient": {
+                    title: "Gradient",
+                    description: "Create a smooth transition from one color or tone to another. Can add depth and dimension.",
+                    image: "https://i.imgur.com/UuRKx9C.jpg"
+                },
+                "pattern": {
+                    title: "Pattern",
+                    description: "Create repeating elements to fill space and create rhythm in your artwork.",
+                    image: "https://i.imgur.com/xWA9JRs.jpg"
+                },
+                "texture": {
+                    title: "Texture",
+                    description: "Add visual or tactile quality to surfaces in your drawing to make them more interesting.",
+                    image: "https://i.imgur.com/GhQwA1G.jpg"
+                },
+                "negative space": {
+                    title: "Negative Space",
+                    description: "Focus on the space around and between subjects. This can create interesting shapes and balance.",
+                    image: "https://i.imgur.com/ZcMHYfK.jpg"
+                }
+            };
+
+            const info = techniqueInfo[technique] || {
+                title: technique,
+                description: "Try exploring this technique in your drawing.",
+                image: ""
+            };
+
+            // Create a modal to show the technique info
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '1000';
+
+            const content = document.createElement('div');
+            content.style.width = '80%';
+            content.style.maxWidth = '400px';
+            content.style.backgroundColor = 'white';
+            content.style.borderRadius = '10px';
+            content.style.padding = '20px';
+            content.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+
+            content.innerHTML = `
+        <h3 style="margin-top: 0; color: #5d6e7e;">${info.title} Technique</h3>
+        <p style="color: #5d6e7e; line-height: 1.6;">${info.description}</p>
+        ${info.image ? `<img src="${info.image}" alt="${info.title}" style="max-width: 100%; border-radius: 5px; margin-top: 10px;">` : ''}
+        <button style="background: #a6c8e0; color: white; border: none; border-radius: 5px; padding: 8px 15px; margin-top: 15px; cursor: pointer;">Close</button>
+    `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            // Add close functionality
+            modal.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            content.querySelector('button').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            content.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // Helper function to extract color names from text
+        function extractColorNames(text) {
+            const commonColors = [
+                'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink',
+                'brown', 'black', 'white', 'gray', 'teal', 'cyan', 'magenta',
+                'violet', 'indigo', 'turquoise', 'maroon', 'navy', 'olive',
+                'gold', 'silver', 'crimson', 'azure'
+            ];
+
+            const colorMatches = [];
+            commonColors.forEach(color => {
+                if (text.toLowerCase().includes(color)) {
+                    colorMatches.push(color);
+                }
+            });
+
+            return colorMatches;
+        }
+
+        // Function to update emoji
+        function updateEmoji(emotion) {
+            const emotionIcon = document.getElementById('emotionIcon');
+
+            // Map Face++ emotions to our emotionIcons
+            const emojiMapping = {
+                'happiness': 'happy',
+                'neutral': 'neutral',
+                'surprise': 'surprised',
+                'sadness': 'sad',
+                'anger': 'angry',
+                'disgust': 'angry',
+                'fear': 'surprised',
+                'contempt': 'angry'
+            };
+
+            // Get the mapped emotion or default to neutral
+            const mappedEmotion = emojiMapping[emotion] || 'neutral';
+
+            // Set the emoji
+            emotionIcon.textContent = emotionIcons[mappedEmotion] || "😐";
+
+            // Update emotion text
+            document.getElementById('emotionText').textContent = `Detected Mood: ${emotion}`;
+
+            // Apply animation
+            emotionIcon.style.animation = 'none';
+            setTimeout(() => {
+                emotionIcon.style.animation = 'pulse 1.5s infinite';
+            }, 10);
+        }
+
+        // Start capturing frames every minute (60000ms)
+        setInterval(captureAndUpload, 60000); // Changed to 1 minute
+
+        // Trigger the first capture immediately
+        setTimeout(captureAndUpload, 1000);
+    }
+
+    // Drawing recognition and AI suggestions
+    let lastAnalysisTime = 0;
+    let isDrawing = false;
+    let drawingChanged = false;
+    let lastRecognized = null;
+    let analysisInProgress = false;
+    let autoAnalysisTimer = null;
+
+    // Detect when user is drawing
+    canvas.on('mouse:down', function () {
+        isDrawing = true;
+        drawingChanged = true;
+
+        // Clear any existing timer
+        if (autoAnalysisTimer) {
+            clearTimeout(autoAnalysisTimer);
+        }
+    });
+
+    canvas.on('mouse:up', function () {
+        isDrawing = false;
+
+        // Start a timer to analyze the drawing after they've finished a stroke
+        autoAnalysisTimer = setTimeout(analyzeDrawing, 2000);
+    });
+
+    // Update drawingChanged flag when path is created
+    canvas.on('path:created', function () {
+        drawingChanged = true;
+    });
+
+    // Helper function to check if the canvas has content
+    function hasCanvasContent() {
+        return canvas.getObjects().length > 0;
+    }
+
+    // Function to analyze the drawing and get suggestions
+    function analyzeDrawing() {
+        // Don't analyze if already in progress
+        if (analysisInProgress) {
+            return;
+        }
+
+        // Don't analyze too frequently (at least 10 seconds between analyses)
+        const now = Date.now();
+        if (!drawingChanged || now - lastAnalysisTime < 10000 || !hasCanvasContent()) {
+            return;
+        }
+
+        drawingChanged = false;
+        lastAnalysisTime = now;
+        analysisInProgress = true;
+
+        // Capture the canvas state
+        const canvasData = canvas.toDataURL('image/png');
+
+        // Add loading indication
+        const suggestionElement = document.getElementById('suggestions');
+        suggestionElement.innerHTML += '<div id="analyzing">Analyzing your artwork...</div>';
+
+        // Send to server for analysis
+        fetch('/analyze_drawing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                canvas_data: canvasData
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Remove loading indication
+                const analyzeEl = document.getElementById('analyzing');
+                if (analyzeEl) analyzeEl.remove();
+                analysisInProgress = false;
+
+                if (data.error) {
+                    console.error("Error analyzing drawing:", data.error);
+                    return;
+                }
+
+                // Update the UI with recognition and suggestions
+                lastRecognized = data.recognized;
+
+                // Display the analysis result in a subtle way
+                const typeEl = document.createElement('div');
+                typeEl.style.fontSize = '12px';
+                typeEl.style.color = '#8d9fad';
+                typeEl.style.marginTop = '8px';
+                typeEl.textContent = `I see you're drawing: ${data.recognized}`;
+
+                // Update the suggestion with the AI response
+                updateAISuggestions(data.suggestion, data.analysis);
+
+                // Force a refresh of the art suggestion to be more specific
+                fetchArtSuggestion();
+            })
+            .catch(error => {
+                console.error("Error during drawing analysis:", error);
+                const analyzeEl = document.getElementById('analyzing');
+                if (analyzeEl) analyzeEl.remove();
+                analysisInProgress = false;
+            });
+    }
+
+    // Update the window load event listener to initialize everything
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            saveToHistory(); // Initialize history with empty canvas
+            setupWebcamCapture(); // Start webcam capture
+
+            // Set up periodic drawing analysis - check every 30 seconds if drawing has changed
+            setInterval(() => {
+                if (drawingChanged && !isDrawing) {
+                    analyzeDrawing();
+                }
+            }, 30000);
+        }, 1000);
+    });
+
+</script>
+</body>
+
+</html>

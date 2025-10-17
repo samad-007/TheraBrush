@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TheraBrush Metrics Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow: auto;
+        }
+
+        button {
+            padding: 10px;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>TheraBrush Metrics Debugging</h1>
+
+    <div class="section">
+        <h2>Gemini Metrics</h2>
+        <button id="fetchGemini">Fetch Gemini Metrics</button>
+        <button id="testGemini">Test Gemini API</button>
+        <pre id="geminiResult">No data yet</pre>
+    </div>
+
+    <div class="section">
+        <h2>All Metrics</h2>
+        <button id="fetchAll">Fetch All Metrics</button>
+        <pre id="allMetricsResult">No data yet</pre>
+    </div>
+
+    <script>
+        // Fetch Gemini metrics
+        document.getElementById('fetchGemini').addEventListener('click', function () {
+            fetch('/gemini_metrics')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('geminiResult').textContent =
+                        JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('geminiResult').textContent =
+                        'Error: ' + error.message;
+                });
+        });
+
+        // Test Gemini API
+        document.getElementById('testGemini').addEventListener('click', function () {
+            document.getElementById('geminiResult').textContent = 'Testing Gemini API...';
+            fetch('/test_gemini_api')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('geminiResult').textContent =
+                        JSON.stringify(data, null, 2);
+                    setTimeout(() => fetchGeminiMetrics(), 1000);
+                })
+                .catch(error => {
+                    document.getElementById('geminiResult').textContent =
+                        'Error: ' + error.message;
+                });
+        });
+
+        // Fetch all metrics
+        document.getElementById('fetchAll').addEventListener('click', function () {
+            fetch('/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('allMetricsResult').textContent =
+                        JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('allMetricsResult').textContent =
+                        'Error: ' + error.message;
+                });
+        });
+
+        function fetchGeminiMetrics() {
+            fetch('/gemini_metrics')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('geminiResult').textContent =
+                        JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('geminiResult').textContent =
+                        'Error: ' + error.message;
+                });
+        }
+    </script>
+</body>
+
+</html>

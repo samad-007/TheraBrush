@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TheraBrush Performance Metrics</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #4a6fa5;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4a6fa5;
+        }
+
+        .metric-box h3 {
+            margin-top: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .metric-box .value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .error-rate {
+            color: #d9534f;
+        }
+
+        .refresh-button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .refresh-button:hover {
+            background-color: #4cae4c;
+        }
+
+        .last-update {
+            font-size: 12px;
+            color: #777;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        #debug-info {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow: auto;
+            max-height: 150px;
+        }
+
+        .confusion-matrix {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .confusion-matrix table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 300px;
+        }
+
+        .confusion-matrix th,
+        .confusion-matrix td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .confusion-matrix th {
+            background-color: #f2f2f2;
+        }
+
+        .confusion-matrix th:first-child {
+            background-color: #e0e0e0;
+        }
+
+        .confusion-matrix tr:nth-child(1) th {
+            background-color: #e0e0e0;
+        }
+
+        .confusion-matrix tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .classification-metrics {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .class-metrics {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #4a6fa5;
+        }
+
+        .class-metrics h4 {
+            margin-top: 0;
+            color: #4a6fa5;
+        }
+
+        .metrics-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .metrics-label {
+            font-weight: 500;
+        }
+
+        .metrics-value {
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TheraBrush Performance Metrics</h1>
+            <div>
+                <button class="refresh-button" onclick="fetchMetrics()">Refresh</button>
+                <button class="refresh-button" onclick="testGemini()" style="background-color: #4a6fa5;">Test
+                    Gemini</button>
+                <button class="refresh-button" onclick="toggleDebug()" style="background-color: #f0ad4e;">Debug</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Gemini AI Performance</h2>
+            <div id="gemini-status" style="margin-bottom: 10px; font-style: italic;">Loading...</div>
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <h3>Average Latency</h3>
+                    <div id="gemini-latency" class="value">0 ms</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Tokens Per Second</h3>
+                    <div id="gemini-tps" class="value">0</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Total API Calls</h3>
+                    <div id="gemini-calls" class="value">0</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Error Rate</h3>
+                    <div id="gemini-errors" class="value error-rate">0%</div>
+                </div>
+            </div>
+            <div id="debug-info" style="display: none;"></div>
+            <div style="margin-top: 15px;">
+                <button onclick="fetchGeminiMetrics()"
+                    style="background: #4a6fa5; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;">
+                    Refresh Gemini Metrics
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Face Recognition Performance</h2>
+            <div id="face-status" style="margin-bottom: 10px; font-style: italic;">Loading...</div>
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <h3>Average Latency</h3>
+                    <div id="face-latency" class="value">0 ms</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Average FPS</h3>
+                    <div id="face-fps" class="value">0</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Average Confidence</h3>
+                    <div id="face-confidence" class="value">0%</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Average Faces Detected</h3>
+                    <div id="face-count" class="value">0</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Total API Calls</h3>
+                    <div id="face-calls" class="value">0</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Error Rate</h3>
+                    <div id="face-errors" class="value error-rate">0%</div>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button onclick="fetchFaceMetrics()"
+                    style="background: #4a6fa5; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;">
+                    Refresh Face Recognition Metrics
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Classification Performance</h2>
+            <div id="classification-status" style="margin-bottom: 10px; font-style: italic;">Loading...</div>
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <h3>Average Precision</h3>
+                    <div id="class-precision" class="value">0.00</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Average Recall</h3>
+                    <div id="class-recall" class="value">0.00</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Average F1-Score</h3>
+                    <div id="class-f1" class="value">0.00</div>
+                </div>
+                <div class="metric-box">
+                    <h3>Total Samples</h3>
+                    <div id="class-samples" class="value">0</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">Confusion Matrix</h3>
+            <div class="confusion-matrix">
+                <table id="confusion-matrix-table">
+                    <tr>
+                        <th>True \ Pred</th>
+                        <th>No data</th>
+                    </tr>
+                    <tr>
+                        <th>No data</th>
+                        <td>0</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 20px;">Class-Specific Metrics</h3>
+            <div id="class-metrics" class="classification-metrics">
+                <div class="class-metrics">
+                    <h4>No data available</h4>
+                    <div class="metrics-row">
+                        <span class="metrics-label">Precision:</span>
+                        <span class="metrics-value">0.00</span>
+                    </div>
+                    <div class="metrics-row">
+                        <span class="metrics-label">Recall:</span>
+                        <span class="metrics-value">0.00</span>
+                    </div>
+                    <div class="metrics-row">
+                        <span class="metrics-label">F1-Score:</span>
+                        <span class="metrics-value">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <button onclick="fetchClassificationMetrics()"
+                    style="background: #4a6fa5; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;">
+                    Refresh Classification Metrics
+                </button>
+            </div>
+        </div>
+
+        <div class="last-update" id="last-update">Last updated: Never</div>
+    </div>
+
+    <script>
+        // Function to fetch metrics from the API
+        function fetchMetrics() {
+            fetch('/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Received metrics data:", data); // Debug log
+                    document.getElementById('debug-info').textContent = JSON.stringify(data, null, 2);
+                    updateMetrics(data);
+                    document.getElementById('last-update').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+                })
+                .catch(error => {
+                    console.error('Error fetching metrics:', error);
+                    document.getElementById('gemini-status').innerHTML =
+                        `<span style="color: red;">✗</span> Error fetching metrics: ${error.message}`;
+                });
+        }
+
+        // Special function to directly fetch and update only Gemini metrics
+        function fetchGeminiMetrics() {
+            document.getElementById('gemini-status').innerHTML = "Fetching Gemini metrics directly...";
+            fetch('/gemini_metrics')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Received Gemini metrics:", data);
+                    document.getElementById('debug-info').textContent = JSON.stringify(data, null, 2);
+
+                    if (data.gemini) {
+                        document.getElementById('gemini-latency').textContent =
+                            (data.gemini.avg_latency * 1000).toFixed(0) + ' ms';
+                        document.getElementById('gemini-tps').textContent =
+                            data.gemini.avg_tokens_per_sec.toFixed(1);
+                        document.getElementById('gemini-calls').textContent =
+                            data.gemini.calls;
+                        document.getElementById('gemini-errors').textContent =
+                            (data.gemini.error_rate * 100).toFixed(1) + '%';
+
+                        document.getElementById('gemini-status').innerHTML =
+                            `<span style="color: green;">✓</span> Metrics loaded with ${data.gemini.latency ? data.gemini.latency.length : 0} samples`;
+                    } else {
+                        document.getElementById('gemini-status').innerHTML =
+                            `<span style="color: red;">✗</span> No Gemini metrics data available`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Gemini metrics:', error);
+                    document.getElementById('gemini-status').innerHTML =
+                        `<span style="color: red;">✗</span> Error: ${error.message}`;
+                });
+        }
+
+        // Special function to directly fetch and update only Face Recognition metrics
+        function fetchFaceMetrics() {
+            document.getElementById('face-status').innerHTML = "Fetching Face Recognition metrics directly...";
+            fetch('/face_metrics')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Received Face metrics:", data);
+
+                    if (data.face_recognition) {
+                        const face = data.face_recognition;
+                        document.getElementById('face-latency').textContent = (face.avg_latency * 1000).toFixed(0) + ' ms';
+                        document.getElementById('face-fps').textContent = face.avg_fps.toFixed(1);
+                        document.getElementById('face-confidence').textContent = (face.avg_confidence * 100).toFixed(1) + '%';
+                        document.getElementById('face-count').textContent = face.avg_faces.toFixed(1);
+                        document.getElementById('face-calls').textContent = face.total_calls;
+                        document.getElementById('face-errors').textContent = (face.error_rate * 100).toFixed(1) + '%';
+
+                        document.getElementById('face-status').innerHTML =
+                            `<span style="color: green;">✓</span> Metrics loaded successfully`;
+                    } else {
+                        document.getElementById('face-status').innerHTML =
+                            `<span style="color: red;">✗</span> No Face Recognition metrics available`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Face metrics:', error);
+                    document.getElementById('face-status').innerHTML =
+                        `<span style="color: red;">✗</span> Error: ${error.message}`;
+                });
+        }
+
+        // Special function to directly fetch and update classification metrics
+        function fetchClassificationMetrics() {
+            document.getElementById('classification-status').innerHTML = "Fetching Classification metrics...";
+            fetch('/classification_metrics')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Received Classification metrics:", data);
+
+                    if (data.classification) {
+                        const metrics = data.classification;
+
+                        // Update average metrics
+                        document.getElementById('class-precision').textContent = metrics.avg_precision.toFixed(2);
+                        document.getElementById('class-recall').textContent = metrics.avg_recall.toFixed(2);
+                        document.getElementById('class-f1').textContent = metrics.avg_f1.toFixed(2);
+                        document.getElementById('class-samples').textContent = metrics.total_samples;
+
+                        // Build confusion matrix
+                        const labels = metrics.labels;
+                        const cm = metrics.confusion_matrix;
+
+                        if (labels && labels.length > 0 && cm && cm.length > 0) {
+                            // Create confusion matrix table
+                            let table = '<table>';
+
+                            // Header row
+                            table += '<tr><th>True \\ Pred</th>';
+                            for (let label of labels) {
+                                table += `<th>${label}</th>`;
+                            }
+                            table += '</tr>';
+
+                            // Data rows
+                            for (let i = 0; i < labels.length; i++) {
+                                table += `<tr><th>${labels[i]}</th>`;
+                                for (let j = 0; j < labels.length; j++) {
+                                    const value = cm[i][j];
+                                    table += `<td>${value}</td>`;
+                                }
+                                table += '</tr>';
+                            }
+
+                            table += '</table>';
+                            document.getElementById('confusion-matrix-table').innerHTML = table;
+
+                            // Create class-specific metrics
+                            let classMetricsHTML = '';
+
+                            for (let label of labels) {
+                                if (label in metrics.precision) {
+                                    classMetricsHTML += `
+                                        <div class="class-metrics">
+                                            <h4>${label}</h4>
+                                            <div class="metrics-row">
+                                                <span class="metrics-label">Precision:</span>
+                                                <span class="metrics-value">${metrics.precision[label].toFixed(2)}</span>
+                                            </div>
+                                            <div class="metrics-row">
+                                                <span class="metrics-label">Recall:</span>
+                                                <span class="metrics-value">${metrics.recall[label].toFixed(2)}</span>
+                                            </div>
+                                            <div class="metrics-row">
+                                                <span class="metrics-label">F1-Score:</span>
+                                                <span class="metrics-value">${metrics.f1_score[label].toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                            }
+
+                            document.getElementById('class-metrics').innerHTML = classMetricsHTML;
+                        } else {
+                            document.getElementById('confusion-matrix-table').innerHTML = `
+                                <tr>
+                                    <th>True \\ Pred</th>
+                                    <th>No data</th>
+                                </tr>
+                                <tr>
+                                    <th>No data</th>
+                                    <td>0</td>
+                                </tr>
+                            `;
+
+                            document.getElementById('class-metrics').innerHTML = `
+                                <div class="class-metrics">
+                                    <h4>No data available</h4>
+                                    <div class="metrics-row">
+                                        <span class="metrics-label">Precision:</span>
+                                        <span class="metrics-value">0.00</span>
+                                    </div>
+                                    <div class="metrics-row">
+                                        <span class="metrics-label">Recall:</span>
+                                        <span class="metrics-value">0.00</span>
+                                    </div>
+                                    <div class="metrics-row">
+                                        <span class="metrics-label">F1-Score:</span>
+                                        <span class="metrics-value">0.00</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        document.getElementById('classification-status').innerHTML =
+                            `<span style="color: green;">✓</span> Classification metrics loaded successfully`;
+                    } else {
+                        document.getElementById('classification-status').innerHTML =
+                            `<span style="color: red;">✗</span> No Classification metrics available`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Classification metrics:', error);
+                    document.getElementById('classification-status').innerHTML =
+                        `<span style="color: red;">✗</span> Error: ${error.message}`;
+                });
+        }
+
+        // Function to test Gemini API
+        function testGemini() {
+            document.getElementById('gemini-status').innerHTML = "Making test call to Gemini API...";
+            fetch('/test_gemini_api')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Test Gemini result:", data);
+                    document.getElementById('gemini-status').innerHTML =
+                        `<span style="color: green;">✓</span> Test call successful. Refreshing metrics...`;
+                    setTimeout(fetchGeminiMetrics, 500);
+                })
+                .catch(error => {
+                    console.error('Error testing Gemini:', error);
+                    document.getElementById('gemini-status').innerHTML =
+                        `<span style="color: red;">✗</span> Test error: ${error.message}`;
+                });
+        }
+
+        // Function to toggle debug info
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debug-info');
+            if (debugInfo.style.display === 'none') {
+                debugInfo.style.display = 'block';
+            } else {
+                debugInfo.style.display = 'none';
+            }
+        }
+
+        // Function to update metrics in the UI
+        function updateMetrics(data) {
+            // Update Gemini metrics - make sure they exist first
+            if (data.gemini) {
+                document.getElementById('gemini-latency').textContent = (data.gemini.avg_latency * 1000).toFixed(0) + ' ms';
+                document.getElementById('gemini-tps').textContent = data.gemini.avg_tokens_per_sec.toFixed(1);
+                document.getElementById('gemini-calls').textContent = data.gemini.total_calls;
+                document.getElementById('gemini-errors').textContent = (data.gemini.error_rate * 100).toFixed(1) + '%';
+
+                // Update status message
+                document.getElementById('gemini-status').innerHTML = `Metrics loaded from dashboard data`;
+            } else {
+                document.getElementById('gemini-status').innerHTML = `<span style="color:orange;">⚠</span> No Gemini data found`;
+            }
+
+            // Update Face Recognition metrics
+            if (data.face_recognition) {
+                const face = data.face_recognition;
+                document.getElementById('face-latency').textContent = (face.avg_latency * 1000).toFixed(0) + ' ms';
+                document.getElementById('face-fps').textContent = face.avg_fps.toFixed(1);
+                document.getElementById('face-confidence').textContent = (face.avg_confidence * 100).toFixed(1) + '%';
+                document.getElementById('face-count').textContent = face.avg_faces.toFixed(1);
+                document.getElementById('face-calls').textContent = face.total_calls;
+                document.getElementById('face-errors').textContent = (face.error_rate * 100).toFixed(1) + '%';
+
+                document.getElementById('face-status').innerHTML = `Metrics loaded from dashboard data`;
+            } else {
+                document.getElementById('face-status').innerHTML = `<span style="color:orange;">⚠</span> No Face Recognition data found`;
+            }
+
+            // Also refresh classification metrics
+            fetchClassificationMetrics();
+        }
+
+        // Fetch metrics initially
+        fetchMetrics();
+
+        // Also fetch individual metrics directly
+        fetchGeminiMetrics();
+        fetchFaceMetrics();
+        fetchClassificationMetrics();
+
+        // Set up interval to refresh metrics every 5 seconds
+        setInterval(fetchMetrics, 5000);
+    </script>
+</body>
+
+</html>
