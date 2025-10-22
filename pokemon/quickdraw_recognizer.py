@@ -26,8 +26,10 @@ class QuickDrawRecognizer:
             model_path: Path to the trained Keras model
             class_names_path: Path to the class names file
         """
-        self.model_path = Path(model_path)
-        self.class_names_path = Path(class_names_path)
+        # Resolve paths relative to this script's directory
+        script_dir = Path(__file__).parent
+        self.model_path = script_dir / model_path if not Path(model_path).is_absolute() else Path(model_path)
+        self.class_names_path = script_dir / class_names_path if not Path(class_names_path).is_absolute() else Path(class_names_path)
         self.model = None
         self.class_names = []
         self.model_loaded = False
@@ -153,52 +155,67 @@ class QuickDrawRecognizer:
     
     def predict(self, strokes, bounding_box, top_k=3):
         """
-        Predict the drawing class from strokes.
+        Make prediction on drawing strokes
         
         Args:
-            strokes: List of strokes [[x0,x1,...], [y0,y1,...]]
+            strokes: List of strokes, where each stroke is a list of [x, y] points
             bounding_box: [min_x, min_y, max_x, max_y]
             top_k: Number of top predictions to return
-        
+            
         Returns:
-            List of dicts with 'class_name', 'probability', 'confidence'
+            List of predictions with class names and probabilities
         """
-        if not self.model_loaded:
-            return [{
-                'class_name': 'unknown',
-                'probability': 0.0,
-                'confidence': 0.0
-            }]
-        
         try:
+            print(f"\n{'='*60}")
+            print(f"🎯 PREDICT METHOD CALLED")
+            print(f"{'='*60}")
+            print(f"📝 Input strokes count: {len(strokes)}")
+            print(f"📦 Bounding box: {bounding_box}")
+            print(f"🔢 Requesting top {top_k} predictions")
+            
             # Transform strokes to 28x28 image
-            image = self.transform_strokes_to_image(strokes, bounding_box)
+            print(f"🖼️  Transforming strokes to image...")
+            img = self.transform_strokes_to_image(strokes, bounding_box)
+            print(f"✅ Image created: shape={img.shape}, dtype={img.dtype}, min={img.min()}, max={img.max()}")
             
             # Preprocess for model
-            img_array = self.preprocess_image(image)
+            print(f"⚙️  Preprocessing image...")
+            img_array = self.preprocess_image(img)
+            print(f"✅ Preprocessed: shape={img_array.shape}, dtype={img_array.dtype}")
             
-            # Make prediction
-            predictions = self.model.predict(img_array, verbose=0)[0]
+            # Get predictions
+            print(f"🤖 Running model.predict()...")
+            predictions = self.model.predict(img_array, verbose=0)
+            print(f"✅ Raw predictions shape: {predictions.shape}")
+            print(f"📊 Prediction stats: min={predictions.min():.6f}, max={predictions.max():.6f}, sum={predictions.sum():.6f}")
             
-            # Get top k predictions
-            top_indices = np.argsort(predictions)[-top_k:][::-1]
+            top_indices = np.argsort(predictions[0])[-top_k:][::-1]
+            print(f"🏆 Top {top_k} indices: {top_indices}")
             
             results = []
             for idx in top_indices:
+                class_name = self.class_names[idx]
+                probability = float(predictions[0][idx])
+                confidence = float(predictions[0][idx] * 100)
                 results.append({
-                    'class_name': self.class_names[idx] if idx < len(self.class_names) else f'class_{idx}',
-                    'probability': float(predictions[idx]),
-                    'confidence': float(predictions[idx] * 100)
+                    'class_name': class_name,
+                    'probability': probability,
+                    'confidence': confidence
                 })
+                print(f"  #{len(results)}: {class_name} - {confidence:.2f}% (prob: {probability:.6f})")
             
+            print(f"{'='*60}\n")
             return results
             
         except Exception as e:
-            print(f"Error during prediction: {str(e)}")
+            print(f"❌ ERROR in prediction: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return [{
                 'class_name': 'error',
                 'probability': 0.0,
-                'confidence': 0.0
+                'confidence': 0.0,
+                'error': str(e)
             }]
     
     def recognize_from_canvas_data(self, canvas_data, top_k=3):

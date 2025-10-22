@@ -78,6 +78,7 @@ class PerformanceTracker:
         with self.lock:
             if error:
                 self.metrics["gemini"]["errors"] += 1
+                print(f"⚠️  Gemini error tracked")
                 return
             
             # Calculate metrics
@@ -91,6 +92,8 @@ class PerformanceTracker:
             self.metrics["gemini"]["input_size"].append(input_size)
             self.metrics["gemini"]["output_size"].append(output_size)
             self.metrics["gemini"]["calls"] += 1
+            
+            print(f"📊 Gemini metrics tracked: latency={latency:.2f}s, calls={self.metrics['gemini']['calls']}, output_size={output_size}")
             
             # Periodically save to file
             if self.metrics["gemini"]["calls"] % 5 == 0:
